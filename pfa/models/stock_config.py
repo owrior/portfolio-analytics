@@ -9,4 +9,5 @@ class StockConfig(Base):
     stock_id = Column(Integer, primary_key=True)
     name = Column(String(30))
     yahoo_ticker = Column(String(30))
+    industry = Column(String(50))
     description = Column(String(100))
