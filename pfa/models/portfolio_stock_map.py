@@ -1,5 +1,5 @@
 from sqlalchemy import Column
-from sqlalchemy.types import Integer, Float
+from sqlalchemy.types import Float, Integer
 
 from pfa.models.base import Base
 
