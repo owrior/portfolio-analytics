@@ -1,0 +1,7 @@
+metric_id;metric;description
+1;Adj Close;Security closing price adjusted to account for any corporate action after closing.
+2;Close;Security price when the financial market is closed for the day.
+3;High;Securities highest trading price in the time period.
+4;Low;Securities lowest trading price in the time period.
+5;Open;Securities price at the open of the financial market.
+6;Volume;The amount of an asset or security which changes ownership over time.

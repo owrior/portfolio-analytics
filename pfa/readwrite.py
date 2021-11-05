@@ -8,3 +8,6 @@ def frame_to_sql(df: pd.DataFrame, table_name: str, clear_table: bool = False) -
         table_name, con=get_engine(), index=False, if_exists="append", method="multi"
     )
 
+
+def read_sql(query) -> pd.DataFrame:
+    return pd.read_sql(query.statement, get_engine())

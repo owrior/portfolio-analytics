@@ -5,25 +5,9 @@ from sqlalchemy_utils import create_database
 from sqlalchemy_utils import drop_database
 
 from pfa.models.base import Base
-from pfa.models.date import Date
-from pfa.models.portfolio import Portfolio
-from pfa.models.stock_config import StockConfig
-from pfa.models.parameter_config import ParameterConfig
-from pfa.models.portfolio_stock_map import PortfolioStockMap
-from pfa.models.parameter_values import ParameterValues
-from pfa.models.stock_values import StockValues
 
 from pfa.db import get_engine
 from pfa.readwrite import frame_to_sql
-
-
-date = Date()
-portfolio = Portfolio()
-stock_config = StockConfig()
-parameter_config = ParameterConfig()
-portfolio_stock_map = PortfolioStockMap()
-parameter_values = ParameterValues()
-stock_values = StockValues()
 
 
 def initialise_database():

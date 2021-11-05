@@ -8,4 +8,5 @@ class StockValues(Base):
     __tablename__ = "stock_values"
     stock_id = Column(Integer, primary_key=True)
     date_id = Column(Integer)
+    metric_id = Column(Integer)
     value = Column(Float)
