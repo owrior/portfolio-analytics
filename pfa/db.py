@@ -16,4 +16,3 @@ def get_engine(db_name: str = None) -> sqa.engine:
         engines[db_name] = sqa.create_engine(url)
 
     return engines[db_name]
-
