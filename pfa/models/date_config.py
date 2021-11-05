@@ -4,7 +4,7 @@ from sqlalchemy.types import Integer, DateTime
 from pfa.models.base import Base
 
 
-class Date(Base):
-    __tablename__ = "date"
+class DateConfig(Base):
+    __tablename__ = "date_config"
     date_id = Column(Integer, primary_key=True)
     date = Column(DateTime)

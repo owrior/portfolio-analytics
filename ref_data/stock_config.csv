@@ -1,6 +1,6 @@
-stock_id;name;yahoo_ticker;industry;description
-1;Polarian Imaging Ltd;POLX.L;Pharmaceutical/Medical Imaging;Medical imaging company selling polarised gas for use in MRI scanners.
-2;Power Metal Resources;POW.L;Mining;
-3;Helios Towers plc;HTWS.L;Telecomms;
-4;First State Asia Focus Fund - Class B;0P00015W87.L;Fund;
-5;Polar Capital Automation & Artificial Intelligence - Class I;;Fund;
+stock_id;currency_id;name;yahoo_ticker;industry;description
+1;1;Polarian Imaging Ltd;POLX.L;Pharmaceutical/Medical Imaging;Medical imaging company selling polarised gas for use in MRI scanners.
+2;1;Power Metal Resources;POW.L;Mining;
+3;1;Helios Towers plc;HTWS.L;Telecomms;
+4;1;First State Asia Focus Fund - Class B;0P00015W87.L;Fund;
+5;1;Polar Capital Automation & Artificial Intelligence - Class I;;Fund;

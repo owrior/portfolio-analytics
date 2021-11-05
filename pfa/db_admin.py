@@ -23,8 +23,8 @@ def initialise_database():
 
 
 def insert_ref_data():
-    date = _get_dates()
-    frame_to_sql(date, "date")
+    date_config = _get_dates()
+    frame_to_sql(date_config, "date_config")
 
     ref_data_folder = Path(__file__).parents[1] / "ref_data"
 

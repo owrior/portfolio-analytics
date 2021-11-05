@@ -7,6 +7,7 @@ from pfa.models.base import Base
 class ParameterConfig(Base):
     __tablename__ = "parameter_config"
     parameter_id = Column(Integer, primary_key=True)
+    currency_id = Column(Integer)
     name = Column(String(30))
     url = Column(String(100))
     description = Column(String(100))
