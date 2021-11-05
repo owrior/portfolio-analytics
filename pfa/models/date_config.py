@@ -1,5 +1,5 @@
 from sqlalchemy import Column
-from sqlalchemy.types import Integer, DateTime
+from sqlalchemy.types import DateTime, Integer
 
 from pfa.models.base import Base
 

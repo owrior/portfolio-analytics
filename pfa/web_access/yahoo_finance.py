@@ -1,15 +1,14 @@
 import re
-import pandas as pd
-from sqlalchemy.orm import Query
-import yfinance as yf
 from typing import List
 
-from pfa.models.date_config import DateConfig
-from pfa.models.stock_config import StockConfig
-from pfa.models.metric_config import MetricConfig
+import pandas as pd
+import yfinance as yf
+from sqlalchemy.orm import Query
 
-from pfa.readwrite import read_sql
-from pfa.readwrite import frame_to_sql
+from pfa.models.date_config import DateConfig
+from pfa.models.metric_config import MetricConfig
+from pfa.models.stock_config import StockConfig
+from pfa.readwrite import frame_to_sql, read_sql
 
 
 def populate_yahoo_stock_values():

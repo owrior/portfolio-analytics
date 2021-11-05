@@ -1,12 +1,10 @@
-import pandas as pd
 from pathlib import Path
-from sqlalchemy_utils import database_exists
-from sqlalchemy_utils import create_database
-from sqlalchemy_utils import drop_database
 
-from pfa.models.base import Base
+import pandas as pd
+from sqlalchemy_utils import create_database, database_exists, drop_database
 
 from pfa.db import get_engine
+from pfa.models.model import create_database_from_model
 from pfa.readwrite import frame_to_sql
 
 
@@ -17,7 +15,7 @@ def initialise_database():
         drop_database(engine.url)
     create_database(engine.url)
 
-    Base.metadata.create_all(engine)
+    create_database_from_model(engine)
 
     insert_ref_data()
 
