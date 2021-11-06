@@ -5,6 +5,7 @@ import sqlalchemy as sqa
 ENGINE_CACHE = {}
 PDB = "PFA_TEST"
 SQLITE_FOLDER = Path(__file__).parents[2] / "sqlite"
+SQLITE_FOLDER.mkdir(parents=True, exist_ok=True)
 
 
 def get_engine(db_name: str = None) -> sqa.engine:

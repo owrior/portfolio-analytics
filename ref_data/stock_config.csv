@@ -1,4 +1,4 @@
-stock_id;currency_id;name;yahoo_ticker;industry;description
+stock_id;currency_id;stock;yahoo_ticker;industry;description
 1;1;Polarian Imaging Ltd;POLX.L;Pharmaceutical/Medical Imaging;Medical imaging company selling polarised gas for use in MRI scanners.
 2;1;Power Metal Resources;POW.L;Mining;
 3;1;Helios Towers plc;HTWS.L;Telecomms;
