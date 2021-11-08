@@ -35,6 +35,8 @@ def insert_ref_data():
 
 
 def _get_dates(start: str = "1970-01-01", end: str = "2050-01-01") -> pd.DataFrame:
-    return pd.DataFrame({"date": pd.date_range(start, end)}).assign(
-        date_id=lambda x: x.index
+    return (
+        pd.DataFrame({"date": pd.date_range(start, end)})
+        .assign(date_id=lambda x: x.index)
+        .loc[:, ["date_id", "date"]]
     )
