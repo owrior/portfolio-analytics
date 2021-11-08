@@ -1,6 +1,7 @@
-import pytest
-import pandas as pd
 from typing import List
+
+import pandas as pd
+import pytest
 
 from tests.utilities.dataframe import read_string_as_csv
 

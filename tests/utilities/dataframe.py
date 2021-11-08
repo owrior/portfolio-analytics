@@ -1,6 +1,7 @@
-import pandas as pd
-from textwrap import dedent
 import io
+from textwrap import dedent
+
+import pandas as pd
 
 
 def read_string_as_csv(csv_string: str, sep: str = ";") -> pd.DataFrame:

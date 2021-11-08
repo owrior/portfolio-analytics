@@ -1,8 +1,5 @@
-import pytest
-import pytest_mock
-from pandas.testing import assert_frame_equal
 import pandas as pd
-
+from pandas.testing import assert_frame_equal
 
 from pfa.db_admin import _get_dates
 

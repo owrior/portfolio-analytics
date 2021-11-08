@@ -1,4 +1,3 @@
-import re
 from typing import List
 
 import pandas as pd
@@ -33,7 +32,7 @@ def _get_config_tables():  # pragma: no cover
         (
             Query(StockConfig)
             .with_entities(StockConfig.stock_id, StockConfig.yahoo_ticker)
-            .filter(StockConfig.yahoo_ticker != None)
+            .filter(StockConfig.yahoo_ticker is None)
         )
     )
     date_config = read_sql(Query(DateConfig))

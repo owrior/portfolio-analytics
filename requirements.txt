@@ -3,5 +3,7 @@ sqlalchemy-utils
 pandas
 pytest
 pytest_mock
+flake8
+isort
 yfinance
 black
