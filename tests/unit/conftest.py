@@ -51,3 +51,22 @@ def gen_processed_stock_values(tickers: List[str]) -> pd.DataFrame:
         .sort_values(columns)
         .reset_index(drop=True)
     )
+
+
+@pytest.fixture
+def date_config():
+    return read_string_as_csv(
+        """
+        date_id;date
+        0;2020-01-01
+        1;2020-01-02
+        2;2020-01-03
+        3;2020-01-04
+        4;2020-01-05
+        5;2020-01-06
+        6;2020-01-07
+        7;2020-01-08
+        8;2020-01-09
+        9;2020-01-10
+        """
+    ).astype({"date": "datetime64[s]"})
