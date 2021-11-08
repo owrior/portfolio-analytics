@@ -28,9 +28,10 @@ def test_process_stock_values(tickers: List[str]):
 
 
 def test_populate_yahoo_stock_values(mocker: MockerFixture):
+    config_data = mock_config_data(["stock_config", "date_config", "metric_config"])
     mocker.patch(
         "pfa.web_access.yahoo_finance._get_config_tables",
-        return_value=mock_config_data(["stock_config", "date_config", "metric_config"]),
+        return_value=config_data,
     )
     mocker.patch(
         "pfa.web_access.yahoo_finance._download_stock_values",
@@ -39,7 +40,7 @@ def test_populate_yahoo_stock_values(mocker: MockerFixture):
     mocker.patch("pfa.web_access.yahoo_finance.frame_to_sql")
 
     tickers = mock_config_data(["stock_config"])[0]["yahoo_ticker"].to_list()
-    stock_config, date_config, metric_config = mock_config_data(["stock_config"])[0]
+    stock_config, date_config, metric_config = config_data
     expected_stock_values = (
         gen_processed_stock_values(tickers)
         .merge(date_config, on="date", how="inner")
