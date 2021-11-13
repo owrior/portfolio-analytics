@@ -10,4 +10,5 @@ class ParameterConfig(Base):
     currency_id = Column(Integer)
     parameter = Column(String(30))
     url = Column(String(100))
+    resource_name = Column(String(100))
     description = Column(String(100))
