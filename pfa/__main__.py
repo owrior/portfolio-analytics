@@ -1,7 +1,6 @@
 from pfa.db_admin import initialise_database
 from pfa.web_access.datahub import populate_datahub_parameter_values
 from pfa.web_access.yahoo_finance import populate_yahoo_stock_values
+from pfa.web_access.update_and_cache import get_maximum_stock_dates
 
-initialise_database()
-populate_yahoo_stock_values()
-populate_datahub_parameter_values()
+get_maximum_stock_dates()
