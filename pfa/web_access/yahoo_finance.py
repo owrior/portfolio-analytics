@@ -14,7 +14,11 @@ def populate_yahoo_stock_values():
     stock_config, date_config, metric_config = _get_config_tables()
     tickers = stock_config["yahoo_ticker"].to_list()
 
+    if len(tickers) == 0:
+        return None
+
     raw_stock_values = _download_stock_values(tickers)
+
     stock_values = _process_stock_values(raw_stock_values)
 
     stock_values = (
@@ -32,7 +36,7 @@ def _get_config_tables():  # pragma: no cover
         (
             Query(StockConfig)
             .with_entities(StockConfig.stock_id, StockConfig.yahoo_ticker)
-            .filter(StockConfig.yahoo_ticker is None)
+            .filter(StockConfig.yahoo_ticker != None)
         )
     )
     date_config = read_sql(Query(DateConfig))

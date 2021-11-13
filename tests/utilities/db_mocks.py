@@ -15,7 +15,13 @@ def mock_config_data(tables: List[str]) -> List[pd.DataFrame]:
             }
         ),
         "parameter_config": pd.DataFrame(
-            {"parameter_id": [], "currency_id": [], "parameter": []}
+            {
+                "parameter_id": [1, 2],
+                "currency_id": [1, 1],
+                "parameter": ["A", "B"],
+                "url": ["A", "B"],
+                "resource_name": ["A", "B"],
+            }
         ),
         "portfolio_config": pd.DataFrame(
             {
