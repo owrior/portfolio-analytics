@@ -10,7 +10,7 @@ from pfa.models.stock_values import StockValues
 from pfa.models.date_config import DateConfig
 
 
-def get_maximum_stock_dates():
+def get_most_recent_stock_dates():
     stock_dates = read_sql(
         Query(StockConfig)
         .with_entities(
