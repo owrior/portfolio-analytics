@@ -46,7 +46,7 @@ def _download_stock_values(
     for _, row in stock_dates.iterrows():
         kwargs = (
             {"period": "max"}
-            if row.date is pd.NaT
+            if row.date in (pd.NaT, None)
             else {"start": row.date + timedelta(days=1)}
         )
         if row.yahoo_ticker is not None:

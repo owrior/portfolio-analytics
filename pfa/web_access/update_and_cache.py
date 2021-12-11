@@ -20,7 +20,7 @@ def get_most_recent_stock_dates():
             DateConfig.date,
         )
         .join(StockValues, StockConfig.stock_id == StockValues.stock_id, isouter=True)
-        .group_by(StockValues.stock_id)
+        .group_by(StockConfig.stock_id)
         .join(DateConfig, StockValues.date_id == DateConfig.date_id, isouter=True)
     )
     return stock_dates.loc[:, ["stock_id", "yahoo_ticker", "date"]]

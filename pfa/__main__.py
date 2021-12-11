@@ -1,5 +1,5 @@
-from pfa.db_admin import initialise_database
-from pfa.web_access.datahub import populate_datahub_parameter_values
-from pfa.web_access.yahoo_finance import populate_yahoo_stock_values
+from pfa.workflows import initialise
+from pfa.workflows import update
 
-populate_yahoo_stock_values()
+
+update.flow.run()
