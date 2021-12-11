@@ -1,13 +1,11 @@
-from typing import List
+import datetime as dt
 
 import pandas as pd
 import yfinance as yf
 from sqlalchemy.orm import Query
-from datetime import timedelta
 
 from pfa.models.date_config import DateConfig
 from pfa.models.metric_config import MetricConfig
-from pfa.models.stock_config import StockConfig
 from pfa.readwrite import frame_to_sql, read_sql
 from pfa.web_access.update_and_cache import get_most_recent_stock_dates
 
@@ -22,15 +20,15 @@ def populate_yahoo_stock_values():
 
     raw_stock_values = _download_stock_values(stock_dates)
 
-    stock_values = _process_stock_values(raw_stock_values)
+    if raw_stock_values is not None:
+        stock_values = _process_stock_values(raw_stock_values)
 
-    stock_values = (
-        stock_values.merge(date_config, on="date", how="inner")
-        .merge(metric_config, on="metric", how="inner")
-        .loc[:, ["stock_id", "date_id", "metric_id", "value"]]
-    )
-    frame_to_sql(stock_values, "stock_values")
-    return stock_values
+        stock_values = (
+            stock_values.merge(date_config, on="date", how="inner")
+            .merge(metric_config, on="metric", how="inner")
+            .loc[:, ["stock_id", "date_id", "metric_id", "value"]]
+        )
+        frame_to_sql(stock_values, "stock_values")
 
 
 def _get_config_tables():  # pragma: no cover
@@ -46,16 +44,16 @@ def _download_stock_values(
     for _, row in stock_dates.iterrows():
         kwargs = (
             {"period": "max"}
-            if row.date is pd.NaT
-            else {"start": row.date + timedelta(days=1)}
+            if row.date in (pd.NaT, None)
+            else {"start": row.date + dt.timedelta(days=1)}
         )
-        if row.yahoo_ticker is not None:
+        if row.yahoo_ticker is not None and kwargs["start"].date() < dt.date.today():
             stock_values.append(
                 yf.download(tickers=row.yahoo_ticker, **kwargs).assign(
                     stock_id=row.stock_id
                 )
             )
-    return pd.concat(stock_values)
+    return pd.concat(stock_values) if len(stock_values) > 0 else None
 
 
 def _process_stock_values(stock_values: pd.DataFrame) -> pd.DataFrame:
