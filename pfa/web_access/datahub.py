@@ -2,7 +2,6 @@
 Functionality for downloading all parameters specified to come from datahub.io
 """
 import datetime as dt
-from typing import Tuple
 
 import numpy as np
 import pandas as pd

@@ -1,5 +1,4 @@
 import datetime as dt
-from typing import List
 
 import pandas as pd
 import yfinance as yf
@@ -7,7 +6,6 @@ from sqlalchemy.orm import Query
 
 from pfa.models.date_config import DateConfig
 from pfa.models.metric_config import MetricConfig
-from pfa.models.stock_config import StockConfig
 from pfa.readwrite import frame_to_sql, read_sql
 from pfa.web_access.update_and_cache import get_most_recent_stock_dates
 
