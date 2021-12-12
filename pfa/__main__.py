@@ -1,5 +1,4 @@
-from pfa.workflows import initialise
-from pfa.workflows import update
+from pfa.workflows import initialise, update
 
 # initialise.flow.run()
 update.flow.run()

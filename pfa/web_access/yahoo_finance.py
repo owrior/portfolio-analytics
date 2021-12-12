@@ -4,10 +4,13 @@ import pandas as pd
 import yfinance as yf
 from sqlalchemy.orm import Query
 
-from pfa.models.config import DateConfig
-from pfa.models.config import MetricConfig
+from pfa.models.config import DateConfig, MetricConfig
 from pfa.readwrite import frame_to_sql, read_sql
 from pfa.web_access.update_and_cache import get_most_recent_stock_dates
+
+from prefect.utilities import logging
+
+logger = logging.get_logger(__file__)
 
 
 def populate_yahoo_stock_values():
@@ -50,10 +53,11 @@ def _download_stock_values(
 
         if start_date.date() < get_last_business_day(dt.date.today()):
             stock_values.append(
-                yf.download(tickers=row.yahoo_ticker, start=start_date).assign(
-                    stock_id=row.stock_id
-                )
+                yf.download(
+                    tickers=row.yahoo_ticker, start=start_date, progress=False
+                ).assign(stock_id=row.stock_id)
             )
+    logger.info(f"Downloaded data for {len(stock_values)} tickers")
     return pd.concat(stock_values) if len(stock_values) > 0 else None
 
 

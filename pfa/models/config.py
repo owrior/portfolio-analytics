@@ -1,7 +1,6 @@
-from sqlalchemy import Column
-from sqlalchemy.types import Integer, String, DateTime
-
+from sqlalchemy import Column, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.types import DateTime, Integer, String
 
 Base = declarative_base()
 
@@ -50,4 +49,15 @@ class StockConfig(Base):
     stock = Column(String(30))
     yahoo_ticker = Column(String(30))
     industry = Column(String(50))
+    description = Column(String(100))
+
+
+class AnalyticsConfig(Base):
+    __tablename__ = "analytics_config"
+    analysis_id = Column(Integer, primary_key=True)
+    metric_id = Column(
+        Integer,
+        ForeignKey(MetricConfig.metric_id, onupdate="CASCADE", ondelete="CASCADE"),
+    )
+    analysis = Column(String(30))
     description = Column(String(100))

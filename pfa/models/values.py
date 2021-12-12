@@ -1,12 +1,14 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy.types import Float, Integer
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.types import Float, Integer
 
-from pfa.models.config import DateConfig
-from pfa.models.config import ParameterConfig
-from pfa.models.config import StockConfig
-from pfa.models.config import MetricConfig
-
+from pfa.models.config import (
+    AnalyticsConfig,
+    DateConfig,
+    MetricConfig,
+    ParameterConfig,
+    StockConfig,
+)
 
 Base = declarative_base()
 
@@ -43,6 +45,21 @@ class StockValues(Base):
     metric_id = Column(
         Integer,
         ForeignKey(MetricConfig.metric_id, onupdate="CASCADE", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    value = Column(Float)
+
+
+class AnalyticsValues(Base):
+    __tablename__ = "analytics_values"
+    analytics_id = Column(
+        Integer,
+        ForeignKey(AnalyticsConfig.analysis_id, onupdate="CASCADE", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    date_id = Column(
+        Integer,
+        ForeignKey(DateConfig.date_id, onupdate="CASCADE", ondelete="CASCADE"),
         primary_key=True,
     )
     value = Column(Float)

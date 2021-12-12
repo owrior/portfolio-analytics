@@ -1,9 +1,8 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy.types import Float, Integer
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.types import Float, Integer
 
-from pfa.models.config import PortfolioConfig
-from pfa.models.config import StockConfig
+from pfa.models.config import PortfolioConfig, StockConfig
 
 Base = declarative_base()
 
