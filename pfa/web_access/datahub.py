@@ -8,7 +8,7 @@ import pandas as pd
 from datapackage import Package
 from sqlalchemy.orm import Query
 
-from pfa.models.date_config import DateConfig
+from pfa.models.config import DateConfig
 from pfa.readwrite import frame_to_sql, read_sql
 from pfa.web_access.update_and_cache import get_most_recent_datahub_parameter_dates
 
@@ -33,17 +33,22 @@ def _download_and_process_parameter_values(
 ) -> pd.DataFrame:
     parameter_values = []
     for _, row in parameter_config.iterrows():
+        start_date = (
+            pd.Timestamp(1900, 1, 1)
+            if row.date in (pd.NaT, None)
+            else pd.Timestamp(row.date + dt.timedelta(days=1))
+        )
+
         package = Package(row["url"])
         res = pd.DataFrame(
             package.get_resource(row["resource_name"]).read(), columns=["date", "value"]
-        )
+        ).astype({"date": "datetime64", "value": "float"})
 
         parameter_values.append(
-            res.astype({"date": "datetime64", "value": "float"})
-            .loc[res["date"] > dt.date.today()]
+            res.loc[res["date"] > start_date]
             .merge(date_config, on="date", how="inner")
             .assign(
-                parameter_id=row["parameter_id"],
+                parameter_id=row.parameter_id,
                 value=lambda x: np.round(x.value, decimals=4),
             )
             .loc[:, ["parameter_id", "date_id", "value"]]

@@ -1,7 +1,9 @@
 from sqlalchemy import Column
 from sqlalchemy.types import Integer, String
 
-from pfa.models.base import Base
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
 
 
 class CurrencyConfig(Base):
