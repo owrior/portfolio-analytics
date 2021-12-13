@@ -18,7 +18,7 @@ def frame_to_sql(df: pd.DataFrame, table_name: str, clear_table: bool = False) -
             if_exists="append",
             method="multi",
         )
-    logger.info(f"Inserted dataframe shape: {df.shape} to {table_name}")
+    logger.info(f"Inserted dataframe, shape: {df.shape} to {table_name}")
 
 
 def read_sql(query) -> pd.DataFrame:

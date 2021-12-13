@@ -55,9 +55,5 @@ class StockConfig(Base):
 class AnalyticsConfig(Base):
     __tablename__ = "analytics_config"
     analysis_id = Column(Integer, primary_key=True)
-    metric_id = Column(
-        Integer,
-        ForeignKey(MetricConfig.metric_id, onupdate="CASCADE", ondelete="CASCADE"),
-    )
     analysis = Column(String(30))
     description = Column(String(100))

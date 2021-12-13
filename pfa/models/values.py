@@ -57,6 +57,16 @@ class AnalyticsValues(Base):
         ForeignKey(AnalyticsConfig.analysis_id, onupdate="CASCADE", ondelete="CASCADE"),
         primary_key=True,
     )
+    stock_id = Column(
+        Integer,
+        ForeignKey(StockConfig.stock_id, onupdate="CASCADE", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    metric_id = Column(
+        Integer,
+        ForeignKey(MetricConfig.metric_id, onupdate="CASCADE", ondelete="CASCADE"),
+        primary_key=True,
+    )
     date_id = Column(
         Integer,
         ForeignKey(DateConfig.date_id, onupdate="CASCADE", ondelete="CASCADE"),
