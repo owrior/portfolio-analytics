@@ -1,8 +1,7 @@
 import pandas as pd
+from prefect.utilities import logging
 
 from pfa.db import get_engine
-
-from prefect.utilities import logging
 
 logger = logging.get_logger(__file__)
 

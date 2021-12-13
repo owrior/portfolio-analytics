@@ -2,13 +2,12 @@ import datetime as dt
 
 import pandas as pd
 import yfinance as yf
+from prefect.utilities import logging
 from sqlalchemy.orm import Query
 
 from pfa.models.config import DateConfig, MetricConfig
 from pfa.readwrite import frame_to_sql, read_sql
 from pfa.web_access.update_and_cache import get_most_recent_stock_dates
-
-from prefect.utilities import logging
 
 logger = logging.get_logger(__file__)
 

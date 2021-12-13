@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import sqlalchemy as sqa
-
 from prefect.utilities import logging
 
 logger = logging.get_logger(__file__)

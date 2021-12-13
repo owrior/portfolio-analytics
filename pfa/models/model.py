@@ -1,8 +1,8 @@
+from prefect.utilities import logging
+
 from pfa.models.config import Base as config_Base
 from pfa.models.map import Base as map_Base
 from pfa.models.values import Base as values_Base
-
-from prefect.utilities import logging
 
 logger = logging.get_logger(__file__)
 
