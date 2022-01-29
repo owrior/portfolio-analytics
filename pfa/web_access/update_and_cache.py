@@ -1,11 +1,8 @@
 import sqlalchemy as sqa
 from sqlalchemy.orm import Query
 
-from pfa.models.date_config import DateConfig
-from pfa.models.parameter_config import ParameterConfig
-from pfa.models.parameter_values import ParameterValues
-from pfa.models.stock_config import StockConfig
-from pfa.models.stock_values import StockValues
+from pfa.models.config import DateConfig, ParameterConfig, StockConfig
+from pfa.models.values import ParameterValues, StockValues
 from pfa.readwrite import read_sql
 
 

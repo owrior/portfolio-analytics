@@ -2,12 +2,14 @@ import datetime as dt
 
 import pandas as pd
 import yfinance as yf
+from prefect.utilities import logging
 from sqlalchemy.orm import Query
 
-from pfa.models.date_config import DateConfig
-from pfa.models.metric_config import MetricConfig
+from pfa.models.config import DateConfig, MetricConfig
 from pfa.readwrite import frame_to_sql, read_sql
 from pfa.web_access.update_and_cache import get_most_recent_stock_dates
+
+logger = logging.get_logger(__file__)
 
 
 def populate_yahoo_stock_values():
@@ -41,19 +43,25 @@ def _download_stock_values(
     stock_dates: pd.DataFrame,
 ) -> pd.DataFrame:  # pragma: no cover
     stock_values = []
-    for _, row in stock_dates.iterrows():
-        kwargs = (
-            {"period": "max"}
+    for _, row in stock_dates.dropna(subset=["yahoo_ticker"]).iterrows():
+        start_date = (
+            pd.Timestamp(1900, 1, 1)
             if row.date in (pd.NaT, None)
-            else {"start": row.date + dt.timedelta(days=1)}
+            else pd.Timestamp(row.date + dt.timedelta(days=1))
         )
-        if row.yahoo_ticker is not None and kwargs["start"].date() < dt.date.today():
+
+        if start_date.date() < get_last_business_day(dt.date.today()):
             stock_values.append(
-                yf.download(tickers=row.yahoo_ticker, **kwargs).assign(
-                    stock_id=row.stock_id
-                )
+                yf.download(
+                    tickers=row.yahoo_ticker, start=start_date, progress=False
+                ).assign(stock_id=row.stock_id)
             )
+    logger.info(f"Downloaded data for {len(stock_values)} tickers")
     return pd.concat(stock_values) if len(stock_values) > 0 else None
+
+
+def get_last_business_day(day: dt.date) -> dt.date:
+    return day - dt.timedelta(days=day.weekday() - min([day.weekday(), 4]))
 
 
 def _process_stock_values(stock_values: pd.DataFrame) -> pd.DataFrame:

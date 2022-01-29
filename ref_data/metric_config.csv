@@ -5,3 +5,6 @@ metric_id;metric;description
 4;Low;Securities lowest trading price in the time period.
 5;Open;Securities price at the open of the financial market.
 6;Volume;The amount of an asset or security which changes ownership over time.
+7;Prediction;A forcast value (y^).
+8;Prediction Upper;The upper value for the predicted value CI (y^ upper).
+9;Prediction Lower;The lower value for the predicted value CI (y^ lower).

@@ -1,4 +1,5 @@
-# from pfa.workflows import initialise
-from pfa.workflows import update
+from pfa.workflows import initialise, run_analytics, update  # noqa F401
 
-update.flow.run()
+# initialise.flow.run()
+# update.flow.run()
+run_analytics.flow.run()
