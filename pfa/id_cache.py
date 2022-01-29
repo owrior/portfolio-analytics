@@ -1,7 +1,8 @@
-from sqlalchemy.orm import Query
 import datetime as dt
 
-from pfa.models.config import AnalyticsConfig, MetricConfig, DateConfig
+from sqlalchemy.orm import Query
+
+from pfa.models.config import AnalyticsConfig, DateConfig, MetricConfig
 from pfa.readwrite import read_sql
 
 

@@ -1,13 +1,12 @@
 import pandas as pd
+from prefect.utilities import logging
 from prophet import Prophet
 from sqlalchemy.orm import Query
-from prefect.utilities import logging
 
-from pfa.id_cache import analytics_id_cache, metric_id_cache, date_id_cache
+from pfa.id_cache import analytics_id_cache, date_id_cache, metric_id_cache
 from pfa.models.config import DateConfig, StockConfig
-from pfa.models.values import StockValues, AnalyticsValues
+from pfa.models.values import AnalyticsValues, StockValues
 from pfa.readwrite import frame_to_sql, read_sql
-
 
 logger = logging.get_logger(__file__)
 
