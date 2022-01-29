@@ -52,6 +52,11 @@ class StockValues(Base):
 
 class AnalyticsValues(Base):
     __tablename__ = "analytics_values"
+    forecast_date_id = Column(
+        Integer,
+        ForeignKey(DateConfig.date_id, onupdate="CASCADE", ondelete="CASCADE"),
+        primary_key=True,
+    )
     analytics_id = Column(
         Integer,
         ForeignKey(AnalyticsConfig.analysis_id, onupdate="CASCADE", ondelete="CASCADE"),

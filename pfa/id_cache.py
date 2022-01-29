@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Query
+import datetime as dt
 
-from pfa.models.config import AnalyticsConfig, MetricConfig
+from pfa.models.config import AnalyticsConfig, MetricConfig, DateConfig
 from pfa.readwrite import read_sql
 
 
@@ -52,5 +53,23 @@ class AnalyticsIDCache(IDCache):
         return self.get_id("Prophet")
 
 
+class DateIDCache(IDCache):
+    id_column = "date_id"
+    label_column = "date"
+    table = DateConfig
+    current_id = None
+
+    @property
+    def todays_id(self):
+        if self.current_id is None:
+            self.current_id = int(
+                self.dataframe.loc[
+                    self.dataframe["date"].dt.date == dt.date.today(), "date_id"
+                ].iloc[0]
+            )
+        return self.current_id
+
+
 metric_id_cache = MetricIDCache()
 analytics_id_cache = AnalyticsIDCache()
+date_id_cache = DateIDCache()
