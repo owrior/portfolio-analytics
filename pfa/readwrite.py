@@ -6,7 +6,7 @@ from pfa.db import get_engine
 logger = logging.get_logger(__file__)
 
 
-def frame_to_sql(df: pd.DataFrame, table_name: str, clear_table: bool = False) -> None:
+def frame_to_sql(df: pd.DataFrame, table_name: str) -> None:
     if df.empty:
         logger.debug("Did not insert empty dataframe")
     else:
