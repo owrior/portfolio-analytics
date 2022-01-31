@@ -1,7 +1,9 @@
 from pathlib import Path
 
 import pandas as pd
-from sqlalchemy_utils import create_database, database_exists, drop_database
+from sqlalchemy_utils import create_database
+from sqlalchemy_utils import database_exists
+from sqlalchemy_utils import drop_database
 
 from pfa.db import get_engine
 from pfa.models.model import create_database_from_model
