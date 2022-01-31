@@ -1,11 +1,12 @@
-import pytest
-from pytest_mock import MockerFixture
 import datetime as dt
-from pandas.testing import assert_frame_equal
-import pandas as pd
 
-from pfa.web_access.yahoo_finance import get_last_business_day
+import pandas as pd
+import pytest
+from pandas.testing import assert_frame_equal
+from pytest_mock import MockerFixture
+
 from pfa.web_access.yahoo_finance import _process_stock_values
+from pfa.web_access.yahoo_finance import get_last_business_day
 
 
 @pytest.mark.parametrize(
