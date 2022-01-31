@@ -1,4 +1,5 @@
-from prefect import Flow, task
+from prefect import Flow
+from prefect import task
 
 from pfa.db_admin import initialise_database
 from pfa.web_access.datahub import populate_datahub_parameter_values

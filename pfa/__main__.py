@@ -1,5 +1,14 @@
-from pfa.workflows import initialise, run_analytics, update  # noqa F401
+import argparse
+from importlib import import_module
 
-# initialise.flow.run()
-# update.flow.run()
-run_analytics.flow.run()
+
+def main():
+    parser = argparse.ArgumentParser(description="Portfolio analytics tool")
+    parser.add_argument("--workflow", "-wf", metavar="wf", type=str)
+    args = parser.parse_args()
+    workflow = import_module(f"pfa.workflows.{args.workflow}")
+    workflow.flow.run()
+
+
+if __name__ == "__main__":
+    main()

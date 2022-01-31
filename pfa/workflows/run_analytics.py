@@ -1,4 +1,5 @@
-from prefect import Flow, task
+from prefect import Flow
+from prefect import task
 
 from pfa.analytics.prophet import run_prophet_forcast_for_stocks
 

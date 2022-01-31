@@ -9,7 +9,8 @@ from datapackage import Package
 from sqlalchemy.orm import Query
 
 from pfa.models.config import DateConfig
-from pfa.readwrite import frame_to_sql, read_sql
+from pfa.readwrite import frame_to_sql
+from pfa.readwrite import read_sql
 from pfa.web_access.update_and_cache import get_most_recent_datahub_parameter_dates
 
 
