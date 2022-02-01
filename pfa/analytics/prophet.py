@@ -91,7 +91,7 @@ def validate_prophet_performance(stock_data, date_config, stock_id) -> None:
         .assign(
             analytics_id=analytics_id_cache.prophet,
             stock_id=stock_id,
-            forcast_date_id=date_id_cache.todays_id,
+            forecast_date_id=date_id_cache.todays_id,
         )
     )
 
