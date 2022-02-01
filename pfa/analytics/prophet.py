@@ -104,7 +104,7 @@ def generate_validation_metrics(true_data, predicted_data):
             "date": [data["ds"].max()],
             "Mean error": [np.mean(y - yhat)],
             "Mean (abs) error": [np.mean(np.abs(y - yhat))],
-            "RSME": [np.sqrt(np.mean(np.square(y - yhat)))],
+            "RMSE": [np.sqrt(np.mean(np.square(y - yhat)))],
         }
     )
 
