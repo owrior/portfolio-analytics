@@ -82,16 +82,13 @@ def validate_prophet_performance(stock_data, date_config, stock_id) -> None:
         ]
     )
     return (
-        validation_metrics.melt(id_vars="date", var_name="metric")
-        .merge(
-            metric_id_cache.dataframe[["metric", "metric_id"]], on="metric", how="inner"
-        )
+        validation_metrics.melt(id_vars="date", var_name="metric_id")
         .merge(date_config, on="date", how="inner")
         .loc[:, ["date_id", "metric_id", "value"]]
         .assign(
+            forecast_date_id=date_id_cache.todays_id,
             analytics_id=analytics_id_cache.prophet,
             stock_id=stock_id,
-            forecast_date_id=date_id_cache.todays_id,
         )
     )
 
@@ -102,9 +99,9 @@ def generate_validation_metrics(true_data, predicted_data):
     return pd.DataFrame(
         {
             "date": [data["ds"].max()],
-            "Mean error": [np.mean(y - yhat)],
-            "Mean (abs) error": [np.mean(np.abs(y - yhat))],
-            "RMSE": [np.sqrt(np.mean(np.square(y - yhat)))],
+            metric_id_cache.mean_error: [np.mean(y - yhat)],
+            metric_id_cache.mean_abs_error: [np.mean(np.abs(y - yhat))],
+            metric_id_cache.rmse: [np.sqrt(np.mean(np.square(y - yhat)))],
         }
     )
 

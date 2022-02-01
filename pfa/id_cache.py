@@ -45,6 +45,18 @@ class MetricIDCache(IDCache):
     def prediction_lower(self):
         return self.get_id("Prediction Lower")
 
+    @property
+    def mean_error(self):
+        return self.get_id("Mean error")
+
+    @property
+    def mean_abs_error(self):
+        return self.get_id("Mean (abs) error")
+
+    @property
+    def rmse(self):
+        return self.get_id("RMSE")
+
 
 class AnalyticsIDCache(IDCache):
     id_column = "analysis_id"
