@@ -1,7 +1,6 @@
 import numpy as np
-import pytest
 import pandas as pd
-import datetime as dt
+import pytest
 
 from pfa.analytics.data_manipulation import create_time_windows
 

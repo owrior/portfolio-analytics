@@ -1,7 +1,7 @@
 from typing import List
-import pandas as pd
+
 import numpy as np
-from typing import List
+import pandas as pd
 
 
 def create_time_windows(
