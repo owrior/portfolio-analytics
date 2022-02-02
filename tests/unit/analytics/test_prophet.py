@@ -67,6 +67,9 @@ def test_generate_validation_metrics(
         ),
     ],
 )
-def test_fill_stock_data_to_time_horizon(stock_data, date_config, value_sum):
+def test_fill_stock_data_to_time_horizon(
+    mocker: MockerFixture, stock_data, date_config, value_sum
+):
+    mocker.patch("pfa.analytics.prophet.metric_id_cache")
     filled_stock_data = fill_stock_data_to_time_horizon(stock_data, date_config)
     assert filled_stock_data["value"].sum() == value_sum
