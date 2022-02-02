@@ -1,11 +1,14 @@
 import datetime as dt
-
+import sqlalchemy as sa
+from prefect.utilities import logging
 from sqlalchemy.orm import Query
 
 from pfa.models.config import AnalyticsConfig
 from pfa.models.config import DateConfig
 from pfa.models.config import MetricConfig
 from pfa.readwrite import read_sql
+
+logger = logging.get_logger(__file__)
 
 
 class IDCache:
@@ -14,7 +17,10 @@ class IDCache:
     table = None
 
     def __init__(self) -> None:
-        self.dataframe = read_sql(Query(self.table))
+        try:
+            self.dataframe = read_sql(Query(self.table))
+        except sa.exc.OperationalError:
+            logger.warn("ID Cache fail - no sql database.")
 
     def get_id(self, label):
         return int(
@@ -44,6 +50,18 @@ class MetricIDCache(IDCache):
     @property
     def prediction_lower(self):
         return self.get_id("Prediction Lower")
+
+    @property
+    def mean_error(self):
+        return self.get_id("Mean error")
+
+    @property
+    def mean_abs_error(self):
+        return self.get_id("Mean (abs) error")
+
+    @property
+    def rmse(self):
+        return self.get_id("RMSE")
 
 
 class AnalyticsIDCache(IDCache):

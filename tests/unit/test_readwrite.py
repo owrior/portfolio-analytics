@@ -1,6 +1,5 @@
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
 from pytest_mock import MockerFixture
 
 from pfa.readwrite import frame_to_sql

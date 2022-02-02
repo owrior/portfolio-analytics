@@ -1,9 +1,14 @@
+import datetime as dt
 import os
+from typing import Any
 
+import numpy as np
 import pandas as pd
 from prophet import Prophet
 from sqlalchemy.orm import Query
+from tqdm import tqdm
 
+from pfa.analytics.data_manipulation import create_time_windows
 from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
 from pfa.id_cache import metric_id_cache
@@ -31,7 +36,7 @@ def run_prophet_forcast_for_stocks() -> None:
             with suppress_stdout_stderr():
                 m = Prophet()
                 m.fit(stock_data)
-                future = m.make_future_dataframe(60, include_history=True)
+                future = m.make_future_dataframe(60, include_history=False)
                 forecasts.append(
                     m.predict(future)[["ds", "yhat", "yhat_lower", "yhat_upper"]]
                     .melt(id_vars="ds", var_name="metric")
@@ -55,6 +60,80 @@ def run_prophet_forcast_for_stocks() -> None:
         frame_to_sql(pd.concat(forecasts), "analytics_values")
 
 
+def validate_prophet_performance(stock_data, date_config, stock_id) -> None:
+    stock_data = fill_stock_data_to_time_horizon(stock_data, date_config)
+
+    stock_data_shards = create_time_windows(
+        stock_data, 30, int(min(len(stock_data) / 3, 90))
+    )
+    with suppress_stdout_stderr():
+        models = [Prophet().fit(data_shard) for data_shard in stock_data_shards]
+        futures = [m.make_future_dataframe(0, include_history=True) for m in models]
+        prediction_shards = [
+            model.predict(future)[["ds", "yhat"]]
+            for model, future in zip(models, futures)
+        ]
+    validation_metrics = pd.concat(
+        [
+            generate_validation_metrics(stock_data_shard, prediction_shard)
+            for stock_data_shard, prediction_shard in zip(
+                stock_data_shards, prediction_shards
+            )
+        ]
+    )
+    return (
+        validation_metrics.melt(id_vars="date", var_name="metric_id")
+        .merge(date_config, on="date", how="inner")
+        .loc[:, ["date_id", "metric_id", "value"]]
+        .assign(
+            forecast_date_id=date_id_cache.todays_id,
+            analytics_id=analytics_id_cache.prophet,
+            stock_id=stock_id,
+        )
+    )
+
+
+def generate_validation_metrics(true_data, predicted_data):
+    data = true_data.merge(predicted_data, on="ds", how="inner")
+    y, yhat = data["y"].values, data["yhat"].values
+    return pd.DataFrame(
+        {
+            "date": [data["ds"].max()],
+            metric_id_cache.mean_error: [np.mean(y - yhat)],
+            metric_id_cache.mean_abs_error: [np.mean(np.abs(y - yhat))],
+            metric_id_cache.rmse: [np.sqrt(np.mean(np.square(y - yhat)))],
+        }
+    )
+
+
+def loop_through_stock_values(func) -> Any:
+    stock_config = read_sql(Query(StockConfig))
+    date_config = read_sql(Query(DateConfig))
+
+    function_results = []
+
+    for _, row in tqdm(stock_config.iterrows(), total=len(stock_config)):
+        stock_data = get_stock_data(row.stock_id)
+        if not stock_data.empty:
+            function_results.append(func(stock_data, date_config, row.stock_id))
+    return pd.concat(function_results)
+
+
+def fill_stock_data_to_time_horizon(
+    stock_data: pd.DataFrame, date_config: pd.DataFrame
+):
+    return (
+        date_config.loc[
+            (date_config["date"] >= stock_data["ds"].min())
+            & (date_config["date"] <= stock_data["ds"].max()),
+            ["date"],
+        ]
+        .rename(columns={"date": "ds"})
+        .merge(stock_data, on="ds", how="left")
+        .ffill()
+    )
+
+
 def get_stock_data(stock_id: int) -> pd.DataFrame:
     return read_sql(
         Query(StockValues)
@@ -65,6 +144,7 @@ def get_stock_data(stock_id: int) -> pd.DataFrame:
         .join(DateConfig, StockValues.date_id == DateConfig.date_id)
         .where(StockValues.stock_id == stock_id)
         .where(StockValues.metric_id == metric_id_cache.adj_close)
+        .where(DateConfig.date >= dt.date.today() - dt.timedelta(weeks=104))
     )
 
 
