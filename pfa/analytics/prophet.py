@@ -5,6 +5,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from prophet import Prophet
+import sqlalchemy as sa
 from sqlalchemy.orm import Query
 from tqdm import tqdm
 
@@ -18,6 +19,7 @@ from pfa.models.values import AnalyticsValues
 from pfa.models.values import StockValues
 from pfa.readwrite import frame_to_sql
 from pfa.readwrite import read_sql
+from pfa.db import get_engine
 
 
 def run_prophet_forcast_for_stocks() -> None:
@@ -61,6 +63,18 @@ def run_prophet_forcast_for_stocks() -> None:
 
 
 def validate_prophet_performance(stock_data, date_config, stock_id) -> None:
+    # Clear the existing metrics and analytics
+    with get_engine().begin() as conn:
+        conn.execute(
+            sa.delete(AnalyticsValues)
+            .where(AnalyticsValues.stock_id == stock_id)
+            .where(AnalyticsValues.analytics_id == analytics_id_cache.prophet)
+            .where(
+                AnalyticsValues.metric_id.in_(
+                    [metric_id_cache.mean_abs_error, metric_id_cache.rmse]
+                )
+            )
+        )
     stock_data = fill_stock_data_to_time_horizon(stock_data, date_config)
 
     stock_data_shards = create_time_windows(
@@ -89,6 +103,7 @@ def validate_prophet_performance(stock_data, date_config, stock_id) -> None:
             forecast_date_id=date_id_cache.todays_id,
             analytics_id=analytics_id_cache.prophet,
             stock_id=stock_id,
+            value=lambda x: np.round(x["value"], decimals=4),
         )
     )
 
@@ -99,7 +114,6 @@ def generate_validation_metrics(true_data, predicted_data):
     return pd.DataFrame(
         {
             "date": [data["ds"].max()],
-            metric_id_cache.mean_error: [np.mean(y - yhat)],
             metric_id_cache.mean_abs_error: [np.mean(np.abs(y - yhat))],
             metric_id_cache.rmse: [np.sqrt(np.mean(np.square(y - yhat)))],
         }
