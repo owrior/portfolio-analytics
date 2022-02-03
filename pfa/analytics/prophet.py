@@ -4,12 +4,13 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from prophet import Prophet
 import sqlalchemy as sa
+from prophet import Prophet
 from sqlalchemy.orm import Query
 from tqdm import tqdm
 
 from pfa.analytics.data_manipulation import create_time_windows
+from pfa.db import get_engine
 from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
 from pfa.id_cache import metric_id_cache
@@ -19,7 +20,6 @@ from pfa.models.values import AnalyticsValues
 from pfa.models.values import StockValues
 from pfa.readwrite import frame_to_sql
 from pfa.readwrite import read_sql
-from pfa.db import get_engine
 
 
 def run_prophet_forcast_for_stocks() -> None:

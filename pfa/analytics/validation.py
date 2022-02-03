@@ -6,7 +6,6 @@ from pfa.analytics.prophet import validate_prophet_performance
 from pfa.analytics.xgboost import validate_xgboost_performance
 from pfa.readwrite import frame_to_sql
 
-
 logger = logging.get_logger(__file__)
 
 

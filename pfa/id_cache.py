@@ -1,4 +1,5 @@
 import datetime as dt
+
 import sqlalchemy as sa
 from prefect.utilities import logging
 from sqlalchemy.orm import Query

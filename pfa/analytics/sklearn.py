@@ -1,16 +1,14 @@
-from sklearn.model_selection import cross_validate
-import pandas as pd
 import numpy as np
-from prefect.utilities import logging
+import pandas as pd
 import sqlalchemy as sa
-
+from prefect.utilities import logging
+from sklearn.model_selection import cross_validate
 
 from pfa.analytics.data_manipulation import create_time_windows
-from pfa.id_cache import metric_id_cache
-from pfa.id_cache import date_id_cache
 from pfa.db import get_engine
+from pfa.id_cache import date_id_cache
+from pfa.id_cache import metric_id_cache
 from pfa.models.values import AnalyticsValues
-
 
 logger = logging.get_logger(__file__)
 
