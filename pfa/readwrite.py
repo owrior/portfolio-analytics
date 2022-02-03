@@ -12,6 +12,7 @@ def frame_to_sql(df: pd.DataFrame, table_name: str) -> None:
     else:
         df.to_sql(
             table_name,
+            chunksize=10000,
             con=get_engine(),
             index=False,
             if_exists="append",

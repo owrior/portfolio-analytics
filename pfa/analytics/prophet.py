@@ -106,7 +106,7 @@ def generate_validation_metrics(true_data, predicted_data):
     )
 
 
-def loop_through_stock_values(func) -> Any:
+def loop_through_stocks(func) -> Any:
     stock_config = read_sql(Query(StockConfig))
     date_config = read_sql(Query(DateConfig))
 

@@ -20,7 +20,8 @@ class IDCache:
         try:
             self.dataframe = read_sql(Query(self.table))
         except sa.exc.OperationalError:
-            logger.warn("ID Cache fail - no sql database.")
+            self.dataframe = None
+            logger.error("ID Cache failed to read database")
 
     def get_id(self, label):
         return int(
@@ -63,6 +64,10 @@ class MetricIDCache(IDCache):
     def rmse(self):
         return self.get_id("RMSE")
 
+    @property
+    def explained_variance(self):
+        return self.get_id("Explained variance")
+
 
 class AnalyticsIDCache(IDCache):
     id_column = "analysis_id"
@@ -72,6 +77,10 @@ class AnalyticsIDCache(IDCache):
     @property
     def prophet(self):
         return self.get_id("Prophet")
+
+    @property
+    def xgboost(self):
+        return self.get_id("XGBoost Regression")
 
 
 class DateIDCache(IDCache):
