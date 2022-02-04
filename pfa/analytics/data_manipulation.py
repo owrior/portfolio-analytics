@@ -93,9 +93,11 @@ def clear_previous_analytics(stock_id, analytics_id, validation: bool = False):
         .where(AnalyticsValues.analytics_id == analytics_id)
     )
     if validation:
-        query.where(AnalyticsValues.metric_id.in_(metric_id_cache.validation_metrics))
+        query = query.where(
+            AnalyticsValues.metric_id.in_(metric_id_cache.validation_metrics)
+        )
     else:
-        query.where(
+        query = query.where(
             AnalyticsValues.metric_id.notin_(metric_id_cache.validation_metrics)
         )
     execute_query(query)
