@@ -7,3 +7,5 @@ stock_id;currency_id;stock;yahoo_ticker;industry;description
 6;2;Google;GOOG;Technology;
 7;2;Apple;AAPL;Technology;
 8;2;Microsoft;MSFT;Technology;
+9;2;Diageo plc;DEO;Alcohol;
+10;1;National Grid;NG;Energy Distribution;

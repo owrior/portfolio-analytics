@@ -10,7 +10,7 @@ def frame_to_sql(df: pd.DataFrame, table_name: str) -> None:
     if df.empty:
         logger.debug("Did not insert empty dataframe")
     else:
-        df.to_sql(
+        df.round(decimals=4).to_sql(
             table_name,
             chunksize=10000,
             con=get_engine(),

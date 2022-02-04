@@ -2,6 +2,7 @@ from pathlib import Path
 
 import sqlalchemy as sqa
 from prefect.utilities import logging
+from sqlalchemy.orm import Query
 
 logger = logging.get_logger(__file__)
 
@@ -22,3 +23,8 @@ def get_engine(db_name: str = None) -> sqa.engine:
         logger.debug(f"Created database engine: {url}")
 
     return ENGINE_CACHE[db_name]
+
+
+def execute_query(query: Query) -> None:
+    with get_engine().begin() as conn:
+        conn.execute(query)

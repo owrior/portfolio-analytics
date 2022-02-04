@@ -1,5 +1,6 @@
 from sqlalchemy import Column
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.types import Boolean
 from sqlalchemy.types import DateTime
 from sqlalchemy.types import Integer
 from sqlalchemy.types import String
@@ -24,6 +25,7 @@ class MetricConfig(Base):
     __tablename__ = "metric_config"
     metric_id = Column(Integer, primary_key=True)
     metric = Column(String(30))
+    validation = Column(Boolean)
     description = Column(String(100))
 
 

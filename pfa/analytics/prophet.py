@@ -2,78 +2,44 @@ import os
 
 import numpy as np
 import pandas as pd
-import sqlalchemy as sa
 from prophet import Prophet
-from sqlalchemy.orm import Query
-from tqdm import tqdm
 
+from pfa.analytics.data_manipulation import clear_previous_analytics
 from pfa.analytics.data_manipulation import create_time_windows
-from pfa.analytics.data_manipulation import get_stock_data
-from pfa.db import get_engine
 from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
 from pfa.id_cache import metric_id_cache
-from pfa.models.config import DateConfig
-from pfa.models.config import StockConfig
-from pfa.models.values import AnalyticsValues
-from pfa.models.values import StockValues
-from pfa.readwrite import frame_to_sql
-from pfa.readwrite import read_sql
 
 
-def run_prophet_forcast_for_stocks() -> None:
-    existing_forecasts = get_existing_forecasts(analytics_id_cache.prophet)
-
-    stock_config = read_sql(Query(StockConfig))
-    stock_config = stock_config[~stock_config["stock_id"].isin(existing_forecasts)]
-
-    date_config = read_sql(Query(DateConfig))
-
-    forecasts = []
-
-    for _, row in stock_config.iterrows():
-        stock_data = get_stock_data(row.stock_id)
-        if not stock_data.empty:
-            with suppress_stdout_stderr():
-                m = Prophet()
-                m.fit(stock_data)
-                future = m.make_future_dataframe(60, include_history=False)
-                forecasts.append(
-                    m.predict(future)[["ds", "yhat", "yhat_lower", "yhat_upper"]]
-                    .melt(id_vars="ds", var_name="metric")
-                    .rename(columns={"ds": "date"})
-                    .merge(date_config, on="date", how="left")
-                    .assign(
-                        forecast_date_id=date_id_cache.todays_id,
-                        analytics_id=analytics_id_cache.prophet,
-                        stock_id=row.stock_id,
-                        metric_id=lambda x: x.metric.map(
-                            {
-                                "yhat": metric_id_cache.prediction,
-                                "yhat_lower": metric_id_cache.prediction_lower,
-                                "yhat_upper": metric_id_cache.prediction_upper,
-                            }
-                        ),
-                    )
-                    .drop(columns=["metric", "date"])
-                )
-    if forecasts:
-        frame_to_sql(pd.concat(forecasts), "analytics_values")
-
-
-def validate_prophet_performance(stock_data, date_config, stock_id) -> None:
-    # Clear the existing metrics and analytics
-    with get_engine().begin() as conn:
-        conn.execute(
-            sa.delete(AnalyticsValues)
-            .where(AnalyticsValues.stock_id == stock_id)
-            .where(AnalyticsValues.analytics_id == analytics_id_cache.prophet)
-            .where(
-                AnalyticsValues.metric_id.in_(
-                    [metric_id_cache.mean_abs_error, metric_id_cache.rmse]
-                )
+def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
+    clear_previous_analytics(stock_id, analytics_id_cache.prophet)
+    with suppress_stdout_stderr():
+        m = Prophet()
+        m.fit(stock_data)
+        future = m.make_future_dataframe(90, include_history=True)
+        return (
+            m.predict(future)[["ds", "yhat", "yhat_lower", "yhat_upper"]]
+            .melt(id_vars="ds", var_name="metric")
+            .rename(columns={"ds": "date"})
+            .merge(date_config, on="date", how="left")
+            .assign(
+                forecast_date_id=date_id_cache.todays_id,
+                analytics_id=analytics_id_cache.prophet,
+                stock_id=stock_id,
+                metric_id=lambda x: x.metric.map(
+                    {
+                        "yhat": metric_id_cache.prediction,
+                        "yhat_lower": metric_id_cache.prediction_lower,
+                        "yhat_upper": metric_id_cache.prediction_upper,
+                    }
+                ),
             )
+            .drop(columns=["metric", "date"])
         )
+
+
+def validate_prophet_performance(stock_data, date_config, stock_id) -> pd.DataFrame:
+    clear_previous_analytics(stock_id, analytics_id_cache.prophet, validation=True)
 
     stock_data_shards = create_time_windows(
         stock_data, 30, int(min(len(stock_data) / 3, 90))
@@ -116,18 +82,6 @@ def generate_validation_metrics(true_data, predicted_data):
             metric_id_cache.rmse: [np.sqrt(np.mean(np.square(y - yhat)))],
         }
     )
-
-
-def get_existing_forecasts(analytics_id: int) -> pd.DataFrame:
-    return read_sql(
-        Query(AnalyticsValues)
-        .with_entities(
-            AnalyticsValues.stock_id,
-        )
-        .where(AnalyticsValues.forecast_date_id == date_id_cache.todays_id)
-        .where(AnalyticsValues.analytics_id == analytics_id)
-        .distinct()
-    )["stock_id"].to_list()
 
 
 class suppress_stdout_stderr(object):

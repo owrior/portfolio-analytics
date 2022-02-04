@@ -4,12 +4,15 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+import sqlalchemy as sa
 from sqlalchemy.orm import Query
 from tqdm import tqdm
 
+from pfa.db import execute_query
 from pfa.id_cache import metric_id_cache
 from pfa.models.config import DateConfig
 from pfa.models.config import StockConfig
+from pfa.models.values import AnalyticsValues
 from pfa.models.values import StockValues
 from pfa.readwrite import read_sql
 
@@ -81,3 +84,18 @@ def get_stock_data(stock_id: int) -> pd.DataFrame:
         .where(StockValues.metric_id == metric_id_cache.adj_close)
         .where(DateConfig.date >= dt.date.today() - dt.timedelta(weeks=104))
     )
+
+
+def clear_previous_analytics(stock_id, analytics_id, validation: bool = False):
+    query = (
+        sa.delete(AnalyticsValues)
+        .where(AnalyticsValues.stock_id == stock_id)
+        .where(AnalyticsValues.analytics_id == analytics_id)
+    )
+    if validation:
+        query.where(AnalyticsValues.metric_id.in_(metric_id_cache.validation_metrics))
+    else:
+        query.where(
+            AnalyticsValues.metric_id.notin_(metric_id_cache.validation_metrics)
+        )
+    execute_query(query)

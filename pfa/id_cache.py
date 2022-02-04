@@ -36,6 +36,15 @@ class MetricIDCache(IDCache):
     id_column = "metric_id"
     label_column = "metric"
     table = MetricConfig
+    _validation_metrics = None
+
+    @property
+    def validation_metrics(self):
+        if self._validation_metrics is None:
+            self._validation_metrics = self.dataframe.loc[
+                self.dataframe["validation"], "metric_id"
+            ].to_list()
+        return self._validation_metrics
 
     @property
     def adj_close(self):
