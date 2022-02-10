@@ -10,3 +10,5 @@ isort
 yfinance
 black
 prophet
+xgboost
+scikit-learn

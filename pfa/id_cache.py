@@ -1,4 +1,5 @@
 import datetime as dt
+
 import sqlalchemy as sa
 from prefect.utilities import logging
 from sqlalchemy.orm import Query
@@ -20,7 +21,8 @@ class IDCache:
         try:
             self.dataframe = read_sql(Query(self.table))
         except sa.exc.OperationalError:
-            logger.warn("ID Cache fail - no sql database.")
+            self.dataframe = None
+            logger.error("ID Cache failed to read database")
 
     def get_id(self, label):
         return int(
@@ -34,6 +36,15 @@ class MetricIDCache(IDCache):
     id_column = "metric_id"
     label_column = "metric"
     table = MetricConfig
+    _validation_metrics = None
+
+    @property
+    def validation_metrics(self):
+        if self._validation_metrics is None:
+            self._validation_metrics = self.dataframe.loc[
+                self.dataframe["validation"], "metric_id"
+            ].to_list()
+        return self._validation_metrics
 
     @property
     def adj_close(self):
@@ -63,6 +74,10 @@ class MetricIDCache(IDCache):
     def rmse(self):
         return self.get_id("RMSE")
 
+    @property
+    def explained_variance(self):
+        return self.get_id("Explained variance")
+
 
 class AnalyticsIDCache(IDCache):
     id_column = "analysis_id"
@@ -72,6 +87,10 @@ class AnalyticsIDCache(IDCache):
     @property
     def prophet(self):
         return self.get_id("Prophet")
+
+    @property
+    def xgboost(self):
+        return self.get_id("XGBoost Regression")
 
 
 class DateIDCache(IDCache):
