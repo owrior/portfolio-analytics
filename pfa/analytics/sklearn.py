@@ -3,7 +3,6 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from scipy.fftpack import shift
 from sklearn.model_selection import cross_validate
 
 from pfa.analytics.data_manipulation import clear_previous_analytics
