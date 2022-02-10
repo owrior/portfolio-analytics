@@ -8,16 +8,12 @@ from pfa.analytics.prophet import generate_validation_metrics
 
 class MockMetricIDCache:
     @property
-    def mean_error(self):
+    def mean_abs_error(self):
         return 1
 
     @property
-    def mean_abs_error(self):
-        return 2
-
-    @property
     def rmse(self):
-        return 3
+        return 2
 
 
 @pytest.mark.parametrize(
@@ -26,7 +22,7 @@ class MockMetricIDCache:
         pytest.param(
             pd.DataFrame([(1, 1)], columns=["ds", "y"]),
             pd.DataFrame([(1, 1)], columns=["ds", "yhat"]),
-            pd.DataFrame([(1, 0.0, 0.0, 0.0)], columns=["date", 1, 2, 3]),
+            pd.DataFrame([(1, 0.0, 0.0)], columns=["date", 1, 2]),
         )
     ],
 )
