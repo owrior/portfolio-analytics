@@ -1,4 +1,5 @@
 from pathlib import Path
+from venv import create
 
 import pandas as pd
 from sqlalchemy_utils import create_database
@@ -7,6 +8,7 @@ from sqlalchemy_utils import drop_database
 
 from pfa.db import get_engine
 from pfa.models.model import create_database_from_model
+from pfa.models.model import create_views
 from pfa.readwrite import frame_to_sql
 
 
@@ -18,8 +20,8 @@ def initialise_database():
     create_database(engine.url)
 
     create_database_from_model(engine)
-
     insert_ref_data()
+    create_views()
 
 
 def insert_ref_data():

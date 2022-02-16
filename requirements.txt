@@ -1,5 +1,6 @@
 sqlalchemy
 sqlalchemy-utils
+sqlalchemy-views
 pandas==1.3.5
 prefect
 datapackage
