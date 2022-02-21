@@ -53,11 +53,13 @@ def _download_stock_values(
         )
 
         if start_date.date() < get_last_business_day(dt.date.today()):
-            stock_values.append(
-                yf.download(
-                    tickers=row.yahoo_ticker, start=start_date, progress=False
-                ).assign(stock_id=row.stock_id)
-            )
+            yf_data = yf.download(
+                tickers=row.yahoo_ticker, start=start_date, progress=False
+            ).assign(stock_id=row.stock_id)
+
+            # Additional filter required due to days before specified start
+            # date in yf.download being present.
+            stock_values.append(yf_data.loc[yf_data.index >= start_date])
     logger.info(f"Downloaded data for {len(stock_values)} tickers")
     return pd.concat(stock_values) if len(stock_values) > 0 else None
 
