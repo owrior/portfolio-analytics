@@ -12,7 +12,7 @@ from pfa.id_cache import metric_id_cache
 
 
 def get_view_creation():
-    return [*validation_metrics()]
+    return [*validation_metrics(), *historical_adj_close(), *forecast_adj_close()]
 
 
 def validation_metrics():
@@ -20,6 +20,18 @@ def validation_metrics():
         AnalyticsValues, [metric_id_cache.mean_abs_error, metric_id_cache.rmse]
     )
     return create_view_from_orm_query("validation_metrics", query)
+
+
+def historical_adj_close():
+    query = get_values_table_with_labels(
+        StockValues, [metric_id_cache.adj_close], include_analytics=False
+    )
+    return create_view_from_orm_query("historical_adj_close", query)
+
+
+def forecast_adj_close():
+    query = get_values_table_with_labels(AnalyticsValues, [metric_id_cache.adj_close])
+    return create_view_from_orm_query("forecast_adj_close", query)
 
 
 def get_values_table_with_labels(
