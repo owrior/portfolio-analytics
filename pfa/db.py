@@ -1,9 +1,10 @@
 from pathlib import Path
 
 import sqlalchemy as sqa
-from sqlalchemy_views import CreateView, DropView
 from prefect.utilities import logging
 from sqlalchemy.orm import Query
+from sqlalchemy_views import CreateView
+from sqlalchemy_views import DropView
 
 logger = logging.get_logger(__file__)
 

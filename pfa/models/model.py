@@ -1,10 +1,10 @@
 from prefect.utilities import logging
 
+from pfa.db import execute_query
 from pfa.models.config import Base as config_Base
 from pfa.models.map import Base as map_Base
 from pfa.models.values import Base as values_Base
 from pfa.models.views import get_view_creation
-from pfa.db import execute_query
 
 logger = logging.get_logger(__file__)
 

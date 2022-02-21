@@ -1,14 +1,13 @@
-import sqlalchemy
 from sqlalchemy.orm import Query
 
+from pfa.db import create_view_from_orm_query
+from pfa.id_cache import metric_id_cache
+from pfa.models.config import AnalyticsConfig
 from pfa.models.config import DateConfig
 from pfa.models.config import MetricConfig
 from pfa.models.config import StockConfig
-from pfa.models.config import AnalyticsConfig
 from pfa.models.values import AnalyticsValues
 from pfa.models.values import StockValues
-from pfa.db import create_view_from_orm_query
-from pfa.id_cache import metric_id_cache
 
 
 def get_view_creation():
