@@ -12,7 +12,7 @@ from pfa.id_cache import metric_id_cache
 
 
 def get_view_creation():
-    return [validation_metrics()]
+    return [*validation_metrics()]
 
 
 def validation_metrics():
