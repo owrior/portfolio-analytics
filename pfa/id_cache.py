@@ -3,6 +3,8 @@ import datetime as dt
 import sqlalchemy as sa
 from prefect.utilities import logging
 from sqlalchemy.orm import Query
+from pathlib import Path
+import pandas as pd
 
 from pfa.models.config import AnalyticsConfig
 from pfa.models.config import DateConfig
@@ -21,8 +23,9 @@ class IDCache:
         try:
             self.dataframe = read_sql(Query(self.table))
         except sa.exc.OperationalError:
-            self.dataframe = None
-            logger.error("ID Cache failed to read database")
+            ref_data_folder = Path(__file__).parents[1] / "ref_data"
+            self.dataframe = pd.read_csv(ref_data_folder / self.table)
+            logger.error("ID Cache failed to read database so used csv instead")
 
     def get_id(self, label):
         return int(
@@ -49,6 +52,10 @@ class MetricIDCache(IDCache):
     @property
     def adj_close(self):
         return self.get_id("Adj Close")
+
+    @property
+    def log_return(self):
+        return self.get_id("Log return")
 
     @property
     def prediction(self):

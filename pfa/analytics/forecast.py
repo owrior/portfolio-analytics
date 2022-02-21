@@ -12,7 +12,7 @@ logger = logging.get_logger(__file__)
 def run_model_forecasts():
     forecasts = []
     logger.info("Prophet forecast")
-    forecasts.append(loop_through_stocks(prophet_forecast))
+    # forecasts.append(loop_through_stocks(prophet_forecast))
     logger.info("XGBoost forecast")
     forecasts.append(loop_through_stocks(xgboost_forecast))
 
