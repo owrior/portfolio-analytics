@@ -3,6 +3,8 @@ from pathlib import Path
 import sqlalchemy as sqa
 from prefect.utilities import logging
 from sqlalchemy.orm import Query
+from sqlalchemy_views import CreateView
+from sqlalchemy_views import DropView
 
 logger = logging.get_logger(__file__)
 
@@ -28,3 +30,15 @@ def get_engine(db_name: str = None) -> sqa.engine:
 def execute_query(query: Query) -> None:
     with get_engine().begin() as conn:
         conn.execute(query)
+
+
+def create_view_from_orm_query(view_name: str, query: Query):
+    return [
+        DropView(sqa.Table(view_name, sqa.MetaData()), if_exists=True),
+        CreateView(
+            sqa.Table(view_name, sqa.MetaData()),
+            sqa.text(
+                str(query.statement.compile(compile_kwargs={"literal_binds": True}))
+            ),
+        ),
+    ]
