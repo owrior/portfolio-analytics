@@ -17,9 +17,12 @@ class IDCache:
     table = None
     dataframe = None
 
-    def get_id(self, label):
+    def init_df(self):
         if self.dataframe is None:
             self.dataframe = read_sql(Query(self.table))
+
+    def get_id(self, label):
+        self.init_df()
         return int(
             self.dataframe.loc[
                 self.dataframe[self.label_column] == label, self.id_column
@@ -35,6 +38,7 @@ class MetricIDCache(IDCache):
 
     @property
     def validation_metrics(self):
+        self.init_df()
         if self._validation_metrics is None:
             self._validation_metrics = self.dataframe.loc[
                 self.dataframe["validation"], "metric_id"
@@ -100,6 +104,7 @@ class DateIDCache(IDCache):
 
     @property
     def todays_id(self):
+        self.init_df()
         if self.current_id is None:
             self.current_id = int(
                 self.dataframe.loc[
