@@ -9,7 +9,7 @@ from sqlalchemy_views import DropView
 logger = logging.get_logger(__file__)
 
 ENGINE_CACHE = {}
-PDB = "PFA_TEST"
+PDB = "PFA"
 SQLITE_FOLDER = Path(__file__).parents[2] / "sqlite"
 SQLITE_FOLDER.mkdir(parents=True, exist_ok=True)
 

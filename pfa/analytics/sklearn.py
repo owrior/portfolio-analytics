@@ -15,11 +15,14 @@ from pfa.id_cache import metric_id_cache
 def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
     clear_previous_analytics(stock_id, analytics_id_cache.xgboost)
     training_period, forecast_length = 270, 90
+    training_start = dt.date.today() - dt.timedelta(days=training_period + 1)
     stock_data = stock_data.loc[
-        stock_data["ds"].dt.date > dt.date.today() - dt.timedelta(days=training_period),
+        stock_data["ds"].dt.date > training_start,
         :,
     ].copy()
-    stock_data["x"] = stock_data["y"].shift().bfill()
+    training_end = stock_data["ds"].max()
+    stock_data["adj_close"] = stock_data["y"]
+    stock_data = transform_prediction_and_create_x(stock_data)
 
     if len(stock_data) < training_period:
         training_period = len(stock_data)
@@ -65,33 +68,50 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
                 stock_data["y"].shift(),
                 stock_data["x"],
             )
+            stock_data["adj_close"] = np.where(
+                stock_data["date_id"] == t_plus_one,
+                np.power(np.e, stock_data["x"]) * stock_data["adj_close"].shift(),
+                stock_data["adj_close"],
+            )
         else:
             stock_data["x"] = np.where(
                 stock_data["date_id"] == t_plus_one,
                 stock_data["y_hat"].shift(),
                 stock_data["x"],
             )
+            stock_data["adj_close"] = np.where(
+                stock_data["date_id"] == t_plus_one,
+                np.power(np.e, stock_data["x"]) * stock_data["adj_close"].shift(),
+                stock_data["adj_close"],
+            )
         stock_data = create_features(stock_data)
-    return (
-        stock_data.rename(columns={"x": "value"})
-        .assign(
-            forecast_date_id=date_id_cache.todays_id,
-            analytics_id=analytics_id,
-            stock_id=stock_id,
-            metric_id=metric_id_cache.prediction,
-        )
-        .loc[
-            :,
-            [
-                "forecast_date_id",
-                "analytics_id",
-                "stock_id",
-                "metric_id",
-                "date_id",
-                "value",
-            ],
+
+    stock_data = stock_data.assign(
+        forecast_date_id=date_id_cache.todays_id,
+        analytics_id=analytics_id,
+        stock_id=stock_id,
+    )
+    stock_data = pd.concat(
+        [
+            stock_data.rename(columns={"x": "value"}).assign(
+                metric_id=metric_id_cache.log_return
+            ),
+            stock_data.rename(columns={"adj_close": "value"}).assign(
+                metric_id=metric_id_cache.adj_close
+            ),
         ]
     )
+    return stock_data.loc[
+        stock_data["date"] >= training_end,
+        [
+            "forecast_date_id",
+            "analytics_id",
+            "stock_id",
+            "metric_id",
+            "date_id",
+            "value",
+        ],
+    ]
 
 
 def validate_performance(
@@ -103,7 +123,7 @@ def validate_performance(
     }
     clear_previous_analytics(stock_id, analytics_id_cache.xgboost, validation=True)
 
-    stock_data["x"] = stock_data["y"].shift().bfill()
+    stock_data = transform_prediction_and_create_x(stock_data)
     stock_data = create_features(stock_data)
     window_size = int(min(len(stock_data) / 3, 90))
     stock_data_shards = create_time_windows(stock_data, 30, window_size)
@@ -143,7 +163,15 @@ def validate_performance(
     )
 
 
+def transform_prediction_and_create_x(stock_data: pd.DataFrame) -> pd.DataFrame:
+    stock_data["y"] = np.log(stock_data["y"] / stock_data["y"].shift())
+    stock_data = stock_data.dropna().copy()
+    stock_data["x"] = stock_data["y"].shift().bfill()
+    return stock_data
+
+
 def create_features(stock_data: pd.DataFrame) -> pd.DataFrame:
+    stock_data["x_std"] = stock_data["x"].std()
     stock_data["x_bar_7d"] = stock_data["x"].rolling(7, min_periods=4).mean().bfill()
     stock_data["x_bar_28d"] = stock_data["x"].rolling(28, min_periods=14).mean().bfill()
     return stock_data

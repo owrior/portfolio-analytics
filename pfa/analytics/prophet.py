@@ -16,7 +16,7 @@ def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
     with suppress_stdout_stderr():
         m = Prophet()
         m.fit(stock_data)
-        future = m.make_future_dataframe(90, include_history=True)
+        future = m.make_future_dataframe(90, include_history=False)
         return (
             m.predict(future)[["ds", "yhat", "yhat_lower", "yhat_upper"]]
             .melt(id_vars="ds", var_name="metric")

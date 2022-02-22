@@ -11,7 +11,7 @@ from pfa.models.values import StockValues
 
 
 def get_view_creation():
-    return [*validation_metrics(), *historical_adj_close(), *forecast_adj_close()]
+    return [*validation_metrics(), *historical_adj_close(), *forecasts()]
 
 
 def validation_metrics():
@@ -28,9 +28,11 @@ def historical_adj_close():
     return create_view_from_orm_query("historical_adj_close", query)
 
 
-def forecast_adj_close():
-    query = get_values_table_with_labels(AnalyticsValues, [metric_id_cache.adj_close])
-    return create_view_from_orm_query("forecast_adj_close", query)
+def forecasts():
+    query = get_values_table_with_labels(
+        AnalyticsValues, [metric_id_cache.adj_close, metric_id_cache.log_return]
+    )
+    return create_view_from_orm_query("forecasts", query)
 
 
 def get_values_table_with_labels(

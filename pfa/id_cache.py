@@ -1,6 +1,5 @@
 import datetime as dt
 
-import sqlalchemy as sa
 from prefect.utilities import logging
 from sqlalchemy.orm import Query
 
@@ -16,15 +15,14 @@ class IDCache:
     id_column = None
     label_column = None
     table = None
+    dataframe = None
 
-    def __init__(self) -> None:
-        try:
+    def init_df(self):
+        if self.dataframe is None:
             self.dataframe = read_sql(Query(self.table))
-        except sa.exc.OperationalError:
-            self.dataframe = None
-            logger.error("ID Cache failed to read database")
 
     def get_id(self, label):
+        self.init_df()
         return int(
             self.dataframe.loc[
                 self.dataframe[self.label_column] == label, self.id_column
@@ -40,6 +38,7 @@ class MetricIDCache(IDCache):
 
     @property
     def validation_metrics(self):
+        self.init_df()
         if self._validation_metrics is None:
             self._validation_metrics = self.dataframe.loc[
                 self.dataframe["validation"], "metric_id"
@@ -49,6 +48,10 @@ class MetricIDCache(IDCache):
     @property
     def adj_close(self):
         return self.get_id("Adj Close")
+
+    @property
+    def log_return(self):
+        return self.get_id("Log return")
 
     @property
     def prediction(self):
@@ -101,6 +104,7 @@ class DateIDCache(IDCache):
 
     @property
     def todays_id(self):
+        self.init_df()
         if self.current_id is None:
             self.current_id = int(
                 self.dataframe.loc[
