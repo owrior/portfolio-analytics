@@ -15,11 +15,12 @@ from pfa.id_cache import metric_id_cache
 def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
     clear_previous_analytics(stock_id, analytics_id_cache.xgboost)
     training_period, forecast_length = 270, 90
+    training_start = dt.date.today() - dt.timedelta(days=training_period + 1)
     stock_data = stock_data.loc[
-        stock_data["ds"].dt.date
-        > dt.date.today() - dt.timedelta(days=training_period + 1),
+        stock_data["ds"].dt.date > training_start,
         :,
     ].copy()
+    training_end = stock_data["ds"].max()
     stock_data["adj_close"] = stock_data["y"]
     stock_data = transform_prediction_and_create_x(stock_data)
 
@@ -101,7 +102,7 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
         ]
     )
     return stock_data.loc[
-        :,
+        stock_data["date"] >= training_end,
         [
             "forecast_date_id",
             "analytics_id",
