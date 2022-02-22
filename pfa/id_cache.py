@@ -1,10 +1,7 @@
 import datetime as dt
 
-import sqlalchemy as sa
 from prefect.utilities import logging
 from sqlalchemy.orm import Query
-from pathlib import Path
-import pandas as pd
 
 from pfa.models.config import AnalyticsConfig
 from pfa.models.config import DateConfig
@@ -18,16 +15,11 @@ class IDCache:
     id_column = None
     label_column = None
     table = None
-
-    def __init__(self) -> None:
-        try:
-            self.dataframe = read_sql(Query(self.table))
-        except sa.exc.OperationalError:
-            ref_data_folder = Path(__file__).parents[1] / "ref_data"
-            self.dataframe = pd.read_csv(ref_data_folder / self.table)
-            logger.error("ID Cache failed to read database so used csv instead")
+    dataframe = None
 
     def get_id(self, label):
+        if self.dataframe is None:
+            self.dataframe = read_sql(Query(self.table))
         return int(
             self.dataframe.loc[
                 self.dataframe[self.label_column] == label, self.id_column
