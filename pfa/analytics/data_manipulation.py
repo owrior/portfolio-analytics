@@ -24,7 +24,6 @@ def create_time_windows(
     Parameters
     ----------
     time_series_data : pd.DataFrame
-        Data in the form of a date column (named date).
     window_start_delay : int
         The number of days between the beginning of each window.
     window_size : int
@@ -40,7 +39,19 @@ def create_time_windows(
         )
         + np.remainder(index_values.shape[0] - window_size, window_distance)
     ]
-    return [time_series_data.iloc[index, :] for index in index_list]
+
+    # TODO: Patch bug happening  when df len 727 is split
+    def try_loc(index, ts):
+        try:
+            return ts.iloc[index, :]
+        except IndexError:
+            return None
+
+    return [
+        try_loc(index, time_series_data)
+        for index in index_list
+        if try_loc(index, time_series_data) is not None
+    ]
 
 
 def loop_through_stocks(func) -> Any:

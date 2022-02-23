@@ -13,3 +13,4 @@ black
 prophet
 xgboost
 scikit-learn
+dash
