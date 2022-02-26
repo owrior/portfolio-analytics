@@ -23,3 +23,10 @@ def frame_to_sql(df: pd.DataFrame, table_name: str) -> None:
 
 def read_sql(query) -> pd.DataFrame:
     return pd.read_sql(query.statement, get_engine())
+
+
+def read_view(name: str, where: str = None) -> pd.DataFrame:
+    query = f"SELECT * FROM {name}"
+    if where:
+        query += f" WHERE {where}"
+    return pd.read_sql(query, get_engine())
