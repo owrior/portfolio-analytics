@@ -1,42 +1,36 @@
-from dash import dcc, html, dash
-from pfa.db import get_engine
-from sqlalchemy import Table, MetaData
-import pandas as pd
+from dash import dcc, html, dash, callback, Input, Output
+import dash_bootstrap_components as dbc
 
-app = dash.Dash(__name__)
+from pfa.dash.pages import index, forecasting_tools
 
-data = pd.read_sql("SELECT * FROM forecasts", get_engine())
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.SPACELAB])
+server = app.server
 
-data["date"] = pd.to_datetime(data["date"])
-
-data = data.loc[
-    (data["stock"] == "GOOG")
-    & (data["analysis"] == "XGBoost Regression")
-    & (data["metric"] == "Adj Close"),
-    :,
-].sort_values("date")
-
-app.layout = app.layout = html.Div(
+base_content = html.Div(
     children=[
-        html.H1(
-            children="Avocado Analytics",
+        html.Div(
+            children=[
+                dcc.Location(id="url", refresh=False),
+                dbc.Navbar(
+                    children=[
+                        dbc.NavItem(dbc.NavLink("Home", href="./")),
+                        dbc.NavItem(
+                            dbc.NavLink("Forecasting tools", href="/forecasting_tools")
+                        ),
+                    ]
+                ),
+            ]
         ),
-        html.P(
-            children="Analyze the behavior of avocado prices"
-            " and the number of avocados sold in the US"
-            " between 2015 and 2018",
-        ),
-        dcc.Graph(
-            figure={
-                "data": [
-                    {
-                        "x": data["date"],
-                        "y": data["value"],
-                        "type": "lines",
-                    },
-                ],
-                "layout": {"title": "Average Price of Avocados"},
-            },
-        ),
+        html.Div(id="page-content"),
     ]
 )
+
+app.layout = base_content
+
+
+@callback(Output("page-content", "children"), Input("url", "pathname"))
+def display_page(pathname):
+    if pathname == "/forecasting_tools":
+        return forecasting_tools.layout
+    else:
+        return index.layout
