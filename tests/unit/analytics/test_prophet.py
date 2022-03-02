@@ -15,6 +15,10 @@ class MockMetricIDCache:
     def rmse(self):
         return 2
 
+    @property
+    def rmsle(self):
+        return 3
+
 
 @pytest.mark.parametrize(
     "true_data, predicted_data, expected_result",
@@ -22,7 +26,7 @@ class MockMetricIDCache:
         pytest.param(
             pd.DataFrame([(1, 1)], columns=["ds", "y"]),
             pd.DataFrame([(1, 1)], columns=["ds", "yhat"]),
-            pd.DataFrame([(1, 0.0, 0.0)], columns=["date", 1, 2]),
+            pd.DataFrame([(1, 0.0, 0.0, 0.0)], columns=["date", 1, 2, 3]),
         )
     ],
 )
