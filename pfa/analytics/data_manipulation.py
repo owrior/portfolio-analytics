@@ -41,7 +41,7 @@ def create_time_windows(
         + np.remainder(index_values.shape[0] - window_size, window_distance)
     ]
 
-    # TODO: Patch bug happening  when df len 727 is split
+    # TODO: Patch bug happening  when df len 727, 723 is split
     def try_loc(index, ts):
         try:
             return ts.iloc[index, :]
