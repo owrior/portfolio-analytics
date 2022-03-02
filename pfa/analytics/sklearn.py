@@ -3,11 +3,15 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
+from sklearn.metrics import make_scorer
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import cross_validate
 
 from pfa.analytics.data_manipulation import clear_previous_analytics
 from pfa.analytics.data_manipulation import create_time_windows
 from pfa.analytics.data_manipulation import get_training_parameters
+from pfa.analytics.data_manipulation import unscale_natural_log
 from pfa.db_admin import extract_columns
 from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
@@ -69,7 +73,7 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
             )
             stock_data["adj_close"] = np.where(
                 stock_data["date_id"] == t_plus_one,
-                np.power(np.e, stock_data["x"]) * stock_data["adj_close"].shift(),
+                unscale_natural_log(stock_data["x"]) * stock_data["adj_close"].shift(),
                 stock_data["adj_close"],
             )
         else:
@@ -80,7 +84,7 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
             )
             stock_data["adj_close"] = np.where(
                 stock_data["date_id"] == t_plus_one,
-                np.power(np.e, stock_data["x"]) * stock_data["adj_close"].shift(),
+                unscale_natural_log(stock_data["x"]) * stock_data["adj_close"].shift(),
                 stock_data["adj_close"],
             )
         stock_data = create_features(stock_data)
@@ -108,11 +112,25 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
 def validate_performance(
     Model, stock_data, date_config, stock_id, analytics_id, kwargs
 ):
+    scoring = {
+        key: make_scorer(func)
+        for key, func in {
+            "mean_absolute_error": mean_absolute_error,
+            "mean_squared_error": mean_squared_error,
+            "mean_squared_log_error": lambda y_true, y_pred: np.sqrt(
+                np.mean(np.square(np.log(y_true + 1) - np.log(y_pred + 1)))
+            ),
+        }.items()
+    }
     score_mapping = {
-        "neg_mean_absolute_error": metric_id_cache.mean_abs_error,
-        "neg_mean_squared_error": metric_id_cache.rmse,
+        "mean_absolute_error": metric_id_cache.mean_abs_error,
+        "mean_squared_error": metric_id_cache.rmse,
+        "mean_squared_log_error": metric_id_cache.rmsle,
     }
     clear_previous_analytics(stock_id, analytics_id_cache.xgboost, validation=True)
+    stock_data = stock_data.loc[
+        stock_data["ds"].dt.date >= dt.date.today() - dt.timedelta(days=360)
+    ].reset_index(drop=True)
 
     stock_data = transform_prediction_and_create_x(stock_data)
     stock_data = create_features(stock_data)
@@ -124,9 +142,7 @@ def validate_performance(
         x, y = get_xy(shard, window_size)
         model = Model(**kwargs).fit(x, y)
         scores.append(
-            pd.DataFrame(
-                cross_validate(model, x, y, scoring=[*score_mapping.keys()], cv=5)
-            )
+            pd.DataFrame(cross_validate(model, x, y, scoring=scoring, cv=5))
             .mean()
             .reset_index()
             .rename(columns={0: "value"})
@@ -137,7 +153,7 @@ def validate_performance(
                 metric_id=lambda x: x["index"].map(
                     {"test_" + key: val for key, val in score_mapping.items()}
                 ),
-                value=lambda x: np.power(np.e, np.absolute(x["value"])),
+                value=lambda x: x["value"],
             )
             .drop(columns="index")
             .dropna()

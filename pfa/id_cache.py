@@ -78,8 +78,8 @@ class MetricIDCache(IDCache):
         return self.get_id("RMSE")
 
     @property
-    def explained_variance(self):
-        return self.get_id("Explained variance")
+    def rmsle(self):
+        return self.get_id("RMSLE")
 
 
 class AnalyticsIDCache(IDCache):

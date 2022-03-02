@@ -21,4 +21,4 @@ def create_database_from_model(engine):
 
 def execute_view_creation():
     [execute_query(view) for view in get_view_creation()]
-    logger.debug("Created views")
+    logger.info("Created views")

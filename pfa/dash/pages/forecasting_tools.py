@@ -1,5 +1,3 @@
-import datetime as dt
-
 import dash_bootstrap_components as dbc
 import plotly.express as px
 from dash import Input
@@ -9,18 +7,13 @@ from dash import dcc
 from dash import html
 
 from pfa.dash.figure import except_missing_db
-from pfa.dash.figure import get_date_range
+from pfa.dash.figure import get_date_kwargs
 from pfa.dash.figure import get_dropdown_options
 from pfa.readwrite import read_view
 
-stock_dropdown = except_missing_db(
-    get_dropdown_options("validation_metrics", "stock"), exception_return=["Error"]
-)
-metric_dropdown = except_missing_db(
-    get_dropdown_options("forecasts", "metric"), exception_return=["Error"]
-)
-forecast_date_range = get_date_range("forecasts")
+stock_dropdown = get_dropdown_options("stock_config", "stock", "forecasts")
 
+metric_dropdown = get_dropdown_options("metric_config", "metric", "forecasts")
 
 layout = html.Div(
     children=[
@@ -30,21 +23,18 @@ layout = html.Div(
                 dbc.Col(
                     children=[
                         dcc.Dropdown(
-                            id="metric-dropdown",
-                            options=metric_dropdown,
-                            value=metric_dropdown[0],
-                        ),
-                        dcc.Dropdown(
                             id="stock-dropdown",
                             options=stock_dropdown,
                             value=stock_dropdown[0],
                         ),
+                        dcc.Dropdown(
+                            id="metric-dropdown",
+                            options=metric_dropdown,
+                            value=metric_dropdown[0],
+                        ),
                         dcc.DatePickerRange(
                             id="date-slider",
-                            start_date=dt.date.today() - dt.timedelta(days=90),
-                            end_date=forecast_date_range["max"],
-                            min_date_allowed=forecast_date_range["min"],
-                            max_date_allowed=forecast_date_range["max"],
+                            **get_date_kwargs("forecasts"),
                         ),
                     ],
                     width=3,
@@ -105,7 +95,7 @@ def update_forecast_figure(stock, metric, start_date, end_date):
             read_view(
                 "forecasts",
                 where=f'stock="{stock}" AND metric="{metric}" '
-                'AND date BETWEEN DATE("{start_date}") AND DATE("{end_date}")',
+                f'AND date BETWEEN DATE("{start_date}") AND DATE("{end_date}")',
             ).rename(
                 columns={"date": "Date", "value": f"{metric}", "analysis": "Analysis"}
             ),

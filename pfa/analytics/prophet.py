@@ -1,3 +1,4 @@
+import datetime as dt
 import os
 
 import numpy as np
@@ -48,7 +49,9 @@ def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
 
 def validate_prophet_performance(stock_data, date_config, stock_id) -> pd.DataFrame:
     clear_previous_analytics(stock_id, analytics_id_cache.prophet, validation=True)
-
+    stock_data = stock_data.loc[
+        stock_data["ds"].dt.date >= dt.date.today() - dt.timedelta(days=360)
+    ].reset_index(drop=True)
     stock_data_shards = create_time_windows(
         stock_data, 30, int(min(len(stock_data) / 3, 90))
     )
@@ -88,6 +91,9 @@ def generate_validation_metrics(true_data, predicted_data):
             "date": [data["ds"].max()],
             metric_id_cache.mean_abs_error: [np.mean(np.abs(y - yhat))],
             metric_id_cache.rmse: [np.sqrt(np.mean(np.square(y - yhat)))],
+            metric_id_cache.rmsle: [
+                np.sqrt(np.mean(np.square(np.log(y + 1) - np.log(yhat + 1))))
+            ],
         }
     )
 
