@@ -12,3 +12,4 @@ metric_id;metric;validation;description
 11;Mean error;1;The mean error. Does not measure the magnitude of errors.
 12;Mean (abs) error;1;The mean absolute error. Measures the magnitude of errors, not direction.
 13;RMSE;1;The root mean squared error. Increases significance of large errors.
+14;RMSLE;1;The root mean squared log error. Resistant to outliers and is respects significance of error size relative to prediction.

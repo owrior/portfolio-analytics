@@ -26,7 +26,7 @@ class MetricConfig(Base):
     metric_id = Column(Integer, primary_key=True)
     metric = Column(String(30))
     validation = Column(Boolean)
-    description = Column(String(100))
+    description = Column(String(250))
 
 
 class ParameterConfig(Base):

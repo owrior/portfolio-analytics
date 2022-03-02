@@ -125,3 +125,7 @@ def get_training_parameters(
     ].copy()
     training_end = stock_data["ds"].max()
     return stock_data, training_end
+
+
+def unscale_natural_log(x):
+    return np.power(np.e, x)

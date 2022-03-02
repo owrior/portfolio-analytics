@@ -46,8 +46,10 @@ def _download_stock_values(
     stock_dates: pd.DataFrame,
 ) -> pd.DataFrame:  # pragma: no cover
     stock_values = []
-    yahoo_downloadable_stocks = stock_dates.dropna(subset=["yahoo_ticker"]).iterrows()
-    for _, row in tqdm(yahoo_downloadable_stocks, len(yahoo_downloadable_stocks)):
+    yahoo_downloadable_stocks = stock_dates.dropna(subset=["yahoo_ticker"])
+    for _, row in tqdm(
+        yahoo_downloadable_stocks.iterrows(), total=len(yahoo_downloadable_stocks)
+    ):
         start_date = (
             pd.Timestamp(1900, 1, 1)
             if row.date in (pd.NaT, None)

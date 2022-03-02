@@ -17,7 +17,8 @@ def get_view_creation():
 
 def validation_metrics():
     query = get_values_table_with_labels(
-        AnalyticsValues, [metric_id_cache.mean_abs_error, metric_id_cache.rmse]
+        AnalyticsValues,
+        [metric_id_cache.rmse, metric_id_cache.rmsle],
     )
     return create_view_from_orm_query("validation_metrics", query)
 

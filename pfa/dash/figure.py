@@ -1,3 +1,5 @@
+import datetime as dt
+
 import pandas as pd
 import sqlalchemy as sqa
 
@@ -11,26 +13,25 @@ def except_missing_db(element_fn, exception_return="Database error"):
         return exception_return
 
 
-def get_dropdown_options(view_name, column_name):
+def get_dropdown_options(view_name: str, column_name: str, check_in: str = None):
     options = except_missing_db(
-        read_sql(f"SELECT DISTINCT {column_name} FROM {view_name}", text=True)
+        read_sql(f"SELECT DISTINCT {column_name} FROM {view_name}", text=True),
+        exception_return=["Error"],
     )
-    if isinstance(options, pd.DataFrame):
-        return options[column_name].to_list()
-    else:
-        return options
+    if check_in:
+        check = except_missing_db(
+            read_sql(f"SELECT DISTINCT {column_name} FROM {check_in}", text=True),
+            exception_return=["Error"],
+        )
+        if not check.empty:
+            options = options.loc[options[column_name].isin(check[column_name]), :]
+    return options[column_name].to_list()
 
 
-def get_date_range(view_name):
-    minimum = except_missing_db(
-        read_sql(f"SELECT MIN(date) FROM {view_name}", text=True),
-        exception_return=pd.DataFrame([(pd.Timestamp(year=1990, month=1, day=1))]),
-    )
-    maximum = except_missing_db(
-        read_sql(f"SELECT MAX(date) FROM {view_name}", text=True),
-        exception_return=pd.DataFrame([(pd.Timestamp(year=2050, month=1, day=1))]),
-    )
+def get_date_kwargs(view_name):
     return {
-        "min": pd.to_datetime(minimum.iloc[0, 0]).date(),
-        "max": pd.to_datetime(maximum.iloc[0, 0]).date(),
+        "start_date": pd.Timestamp(dt.date.today() - dt.timedelta(days=90)),
+        "end_date": pd.Timestamp(dt.date.today() + dt.timedelta(days=90)),
+        "min_date_allowed": pd.Timestamp(dt.datetime(year=1990, month=1, day=1)),
+        "max_date_allowed": pd.Timestamp(dt.datetime(year=2050, month=1, day=1)),
     }
