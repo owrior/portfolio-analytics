@@ -1,3 +1,4 @@
+import sqlalchemy as sqa
 from sqlalchemy.orm import Query
 
 from pfa.db import create_view_from_orm_query
@@ -29,8 +30,15 @@ def historical_adj_close():
 
 
 def forecasts():
-    query = get_values_table_with_labels(
-        AnalyticsValues, [metric_id_cache.adj_close, metric_id_cache.log_return]
+    query = sqa.union_all(
+        get_values_table_with_labels(
+            AnalyticsValues, [metric_id_cache.adj_close, metric_id_cache.log_return]
+        ),
+        get_values_table_with_labels(
+            StockValues,
+            [metric_id_cache.adj_close, metric_id_cache.log_return],
+            include_analytics=False,
+        ),
     )
     return create_view_from_orm_query("forecasts", query)
 
@@ -39,14 +47,14 @@ def get_values_table_with_labels(
     Values, metric_ids: list, include_analytics: bool = True
 ):
     entities = [
-        DateConfig.date,
-        StockConfig.stock,
-        MetricConfig.metric,
-        Values.value,
+        DateConfig.date.label("date"),
+        StockConfig.stock.label("stock"),
+        AnalyticsConfig.analysis.label("analysis")
+        if include_analytics
+        else sqa.sql.expression.literal("Actual Data").label("analysis"),
+        MetricConfig.metric.label("metric"),
+        Values.value.label("value"),
     ]
-
-    if include_analytics:
-        entities.insert(3, AnalyticsConfig.analysis)
 
     query = (
         Query(Values)
@@ -58,8 +66,6 @@ def get_values_table_with_labels(
 
     if include_analytics:
         query = query.join(
-            AnalyticsConfig,
-            AnalyticsConfig.analysis_id == Values.analytics_id,
-            isouter=True,
+            AnalyticsConfig, AnalyticsConfig.analysis_id == Values.analytics_id
         )
     return query.where(MetricConfig.metric_id.in_([*metric_ids]))

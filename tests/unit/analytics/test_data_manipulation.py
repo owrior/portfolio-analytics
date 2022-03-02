@@ -28,6 +28,7 @@ from pfa.analytics.data_manipulation import loop_through_stocks
         pytest.param(5, 33, id="Distance=5, Size=33"),
         pytest.param(7, 100, id="Distance=7, Size=100"),
         pytest.param(28, 28, id="Distance=28, Size=28"),
+        pytest.param(30, 90, id="Distance=30, Size=90"),
     ],
 )
 def test_create_time_windows(

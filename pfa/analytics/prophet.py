@@ -6,18 +6,23 @@ from prophet import Prophet
 
 from pfa.analytics.data_manipulation import clear_previous_analytics
 from pfa.analytics.data_manipulation import create_time_windows
+from pfa.analytics.data_manipulation import get_training_parameters
+from pfa.db_admin import extract_columns
 from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
 from pfa.id_cache import metric_id_cache
+from pfa.models.values import AnalyticsValues
 
 
 def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
     clear_previous_analytics(stock_id, analytics_id_cache.prophet)
+    training_period, forecast_length = 270, 90
+    stock_data, training_end = get_training_parameters(stock_data, training_period)
     with suppress_stdout_stderr():
         m = Prophet()
         m.fit(stock_data)
-        future = m.make_future_dataframe(90, include_history=False)
-        return (
+        future = m.make_future_dataframe(forecast_length, include_history=True)
+        forecast = (
             m.predict(future)[["ds", "yhat", "yhat_lower", "yhat_upper"]]
             .melt(id_vars="ds", var_name="metric")
             .rename(columns={"ds": "date"})
@@ -28,14 +33,17 @@ def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
                 stock_id=stock_id,
                 metric_id=lambda x: x.metric.map(
                     {
-                        "yhat": metric_id_cache.prediction,
+                        "yhat": metric_id_cache.adj_close,
                         "yhat_lower": metric_id_cache.prediction_lower,
                         "yhat_upper": metric_id_cache.prediction_upper,
                     }
                 ),
             )
-            .drop(columns=["metric", "date"])
         )
+    return forecast.loc[
+        forecast["date"] >= training_end,
+        extract_columns(AnalyticsValues),
+    ]
 
 
 def validate_prophet_performance(stock_data, date_config, stock_id) -> pd.DataFrame:
@@ -62,13 +70,13 @@ def validate_prophet_performance(stock_data, date_config, stock_id) -> pd.DataFr
     return (
         validation_metrics.melt(id_vars="date", var_name="metric_id")
         .merge(date_config, on="date", how="inner")
-        .loc[:, ["date_id", "metric_id", "value"]]
         .assign(
             forecast_date_id=date_id_cache.todays_id,
             analytics_id=analytics_id_cache.prophet,
             stock_id=stock_id,
             value=lambda x: np.round(x["value"], decimals=4),
         )
+        .loc[:, extract_columns(AnalyticsValues)]
     )
 
 

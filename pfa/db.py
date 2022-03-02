@@ -33,12 +33,14 @@ def execute_query(query: Query) -> None:
 
 
 def create_view_from_orm_query(view_name: str, query: Query):
+    if isinstance(query, sqa.sql.selectable.CompoundSelect):
+        query = str(query.compile(compile_kwargs={"literal_binds": True}))
+    else:
+        query = str(query.statement.compile(compile_kwargs={"literal_binds": True}))
     return [
         DropView(sqa.Table(view_name, sqa.MetaData()), if_exists=True),
         CreateView(
             sqa.Table(view_name, sqa.MetaData()),
-            sqa.text(
-                str(query.statement.compile(compile_kwargs={"literal_binds": True}))
-            ),
+            sqa.text(query),
         ),
     ]

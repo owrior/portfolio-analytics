@@ -4,6 +4,7 @@ import pandas as pd
 import yfinance as yf
 from prefect.utilities import logging
 from sqlalchemy.orm import Query
+from tqdm import tqdm
 
 from pfa.models.config import DateConfig
 from pfa.models.config import MetricConfig
@@ -45,7 +46,8 @@ def _download_stock_values(
     stock_dates: pd.DataFrame,
 ) -> pd.DataFrame:  # pragma: no cover
     stock_values = []
-    for _, row in stock_dates.dropna(subset=["yahoo_ticker"]).iterrows():
+    yahoo_downloadable_stocks = stock_dates.dropna(subset=["yahoo_ticker"]).iterrows()
+    for _, row in tqdm(yahoo_downloadable_stocks, len(yahoo_downloadable_stocks)):
         start_date = (
             pd.Timestamp(1900, 1, 1)
             if row.date in (pd.NaT, None)

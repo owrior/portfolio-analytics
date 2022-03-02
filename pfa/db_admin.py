@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+import sqlalchemy as sqa
 from sqlalchemy_utils import create_database
 from sqlalchemy_utils import database_exists
 from sqlalchemy_utils import drop_database
@@ -43,3 +44,7 @@ def _get_dates(start: str = "1970-01-01", end: str = "2050-01-01") -> pd.DataFra
         .assign(date_id=lambda x: x.index)
         .loc[:, ["date_id", "date"]]
     )
+
+
+def extract_columns(table: sqa.orm.DeclarativeMeta) -> list:
+    return [*table._sa_class_manager.keys()]

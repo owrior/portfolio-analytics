@@ -1,6 +1,7 @@
 import datetime as dt
 from typing import Any
 from typing import List
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -24,7 +25,6 @@ def create_time_windows(
     Parameters
     ----------
     time_series_data : pd.DataFrame
-        Data in the form of a date column (named date).
     window_start_delay : int
         The number of days between the beginning of each window.
     window_size : int
@@ -40,7 +40,19 @@ def create_time_windows(
         )
         + np.remainder(index_values.shape[0] - window_size, window_distance)
     ]
-    return [time_series_data.iloc[index, :] for index in index_list]
+
+    # TODO: Patch bug happening  when df len 727, 723 is split
+    def try_loc(index, ts):
+        try:
+            return ts.iloc[index, :]
+        except IndexError:
+            return None
+
+    return [
+        try_loc(index, time_series_data)
+        for index in index_list
+        if try_loc(index, time_series_data) is not None
+    ]
 
 
 def loop_through_stocks(func) -> Any:
@@ -101,3 +113,15 @@ def clear_previous_analytics(stock_id, analytics_id, validation: bool = False):
             AnalyticsValues.metric_id.notin_(metric_id_cache.validation_metrics)
         )
     execute_query(query)
+
+
+def get_training_parameters(
+    stock_data: pd.DataFrame, training_period: int
+) -> Tuple[pd.DataFrame, dt.date]:
+    training_start = dt.date.today() - dt.timedelta(days=training_period + 1)
+    stock_data = stock_data.loc[
+        stock_data["ds"].dt.date > training_start,
+        :,
+    ].copy()
+    training_end = stock_data["ds"].max()
+    return stock_data, training_end

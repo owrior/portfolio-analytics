@@ -13,3 +13,5 @@ black
 prophet
 xgboost
 scikit-learn
+dash
+dash_bootstrap_components
