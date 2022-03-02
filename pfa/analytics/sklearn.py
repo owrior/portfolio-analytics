@@ -128,7 +128,6 @@ def validate_performance(
                 cross_validate(model, x, y, scoring=[*score_mapping.keys()], cv=5)
             )
             .mean()
-            .round()
             .reset_index()
             .rename(columns={0: "value"})
             .assign(
@@ -138,9 +137,7 @@ def validate_performance(
                 metric_id=lambda x: x["index"].map(
                     {"test_" + key: val for key, val in score_mapping.items()}
                 ),
-                value=lambda x: np.absolute(
-                    np.round(x["value"], decimals=4),
-                ),
+                value=lambda x: np.power(np.e, np.absolute(x["value"])),
             )
             .drop(columns="index")
             .dropna()
