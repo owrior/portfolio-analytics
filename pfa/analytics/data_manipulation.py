@@ -1,6 +1,7 @@
 import datetime as dt
 from typing import Any
 from typing import List
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -112,3 +113,15 @@ def clear_previous_analytics(stock_id, analytics_id, validation: bool = False):
             AnalyticsValues.metric_id.notin_(metric_id_cache.validation_metrics)
         )
     execute_query(query)
+
+
+def get_training_parameters(
+    stock_data: pd.DataFrame, training_period: int
+) -> Tuple[pd.DataFrame, dt.date]:
+    training_start = dt.date.today() - dt.timedelta(days=training_period + 1)
+    stock_data = stock_data.loc[
+        stock_data["ds"].dt.date > training_start,
+        :,
+    ].copy()
+    training_end = stock_data["ds"].max()
+    return stock_data, training_end

@@ -1,17 +1,17 @@
-from dash import html
-from dash import dcc
-from dash import callback
-from dash import Input
-from dash import Output
-import dash_bootstrap_components as dbc
-import plotly.express as px
 import datetime as dt
 
-from pfa.readwrite import read_view
-from pfa.dash.figure import except_missing_db
-from pfa.dash.figure import get_dropdown_options
-from pfa.dash.figure import get_date_range
+import dash_bootstrap_components as dbc
+import plotly.express as px
+from dash import Input
+from dash import Output
+from dash import callback
+from dash import dcc
+from dash import html
 
+from pfa.dash.figure import except_missing_db
+from pfa.dash.figure import get_date_range
+from pfa.dash.figure import get_dropdown_options
+from pfa.readwrite import read_view
 
 stock_dropdown = except_missing_db(
     get_dropdown_options("validation_metrics", "stock"), exception_return=["Error"]
@@ -41,7 +41,7 @@ layout = html.Div(
                         ),
                         dcc.DatePickerRange(
                             id="date-slider",
-                            start_date=dt.date.today(),
+                            start_date=dt.date.today() - dt.timedelta(days=90),
                             end_date=forecast_date_range["max"],
                             min_date_allowed=forecast_date_range["min"],
                             max_date_allowed=forecast_date_range["max"],
@@ -104,7 +104,8 @@ def update_forecast_figure(stock, metric, start_date, end_date):
         px.line(
             read_view(
                 "forecasts",
-                where=f'stock="{stock}" AND metric="{metric}" AND date BETWEEN DATE("{start_date}") AND DATE("{end_date}")',
+                where=f'stock="{stock}" AND metric="{metric}" '
+                'AND date BETWEEN DATE("{start_date}") AND DATE("{end_date}")',
             ).rename(
                 columns={"date": "Date", "value": f"{metric}", "analysis": "Analysis"}
             ),

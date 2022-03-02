@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Query
 import sqlalchemy as sqa
+from sqlalchemy.orm import Query
 
 from pfa.db import create_view_from_orm_query
 from pfa.id_cache import metric_id_cache

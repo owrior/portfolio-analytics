@@ -7,20 +7,19 @@ from sklearn.model_selection import cross_validate
 
 from pfa.analytics.data_manipulation import clear_previous_analytics
 from pfa.analytics.data_manipulation import create_time_windows
+from pfa.analytics.data_manipulation import get_training_parameters
+from pfa.db_admin import extract_columns
 from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
 from pfa.id_cache import metric_id_cache
+from pfa.models.values import AnalyticsValues
 
 
 def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
     clear_previous_analytics(stock_id, analytics_id_cache.xgboost)
     training_period, forecast_length = 270, 90
-    training_start = dt.date.today() - dt.timedelta(days=training_period + 1)
-    stock_data = stock_data.loc[
-        stock_data["ds"].dt.date > training_start,
-        :,
-    ].copy()
-    training_end = stock_data["ds"].max()
+    stock_data, training_end = get_training_parameters(stock_data, training_period)
+
     stock_data["adj_close"] = stock_data["y"]
     stock_data = transform_prediction_and_create_x(stock_data)
 
@@ -102,15 +101,7 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
         ]
     )
     return stock_data.loc[
-        stock_data["date"] >= training_end,
-        [
-            "forecast_date_id",
-            "analytics_id",
-            "stock_id",
-            "metric_id",
-            "date_id",
-            "value",
-        ],
+        stock_data["date"] >= training_end, extract_columns(AnalyticsValues)
     ]
 
 
@@ -158,8 +149,8 @@ def validate_performance(
     return (
         pd.concat(scores)
         .merge(date_config, on="date", how="inner")
-        .drop(columns="date")
         .assign(forecast_date_id=date_id_cache.todays_id)
+        .loc[:, extract_columns(AnalyticsValues)]
     )
 
 

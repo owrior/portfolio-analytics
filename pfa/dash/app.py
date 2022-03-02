@@ -1,7 +1,13 @@
-from dash import dcc, html, dash, callback, Input, Output
 import dash_bootstrap_components as dbc
+from dash import Input
+from dash import Output
+from dash import callback
+from dash import dash
+from dash import dcc
+from dash import html
 
-from pfa.dash.pages import index, forecasting_tools
+from pfa.dash.pages import forecasting_tools
+from pfa.dash.pages import index
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.SPACELAB])
 server = app.server

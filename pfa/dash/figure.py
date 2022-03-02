@@ -1,5 +1,6 @@
-import sqlalchemy as sqa
 import pandas as pd
+import sqlalchemy as sqa
+
 from pfa.readwrite import read_sql
 
 
