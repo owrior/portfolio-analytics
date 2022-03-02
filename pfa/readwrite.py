@@ -21,12 +21,13 @@ def frame_to_sql(df: pd.DataFrame, table_name: str) -> None:
     logger.info(f"Inserted dataframe, shape: {df.shape} to {table_name}")
 
 
-def read_sql(query) -> pd.DataFrame:
-    return pd.read_sql(query.statement, get_engine())
+def read_sql(query, text=False) -> pd.DataFrame:
+    return pd.read_sql(query if text else query.statement, get_engine())
 
 
 def read_view(name: str, where: str = None) -> pd.DataFrame:
     query = f"SELECT * FROM {name}"
     if where:
         query += f" WHERE {where}"
-    return pd.read_sql(query, get_engine())
+    view_result = pd.read_sql(query, get_engine())
+    return view_result.sort_values([*view_result.columns])

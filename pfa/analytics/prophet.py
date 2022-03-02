@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 from prophet import Prophet
+import datetime as dt
 
 from pfa.analytics.data_manipulation import clear_previous_analytics
 from pfa.analytics.data_manipulation import create_time_windows
@@ -13,11 +14,18 @@ from pfa.id_cache import metric_id_cache
 
 def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
     clear_previous_analytics(stock_id, analytics_id_cache.prophet)
+    training_period, forecast_length = 270, 90
+    training_start = dt.date.today() - dt.timedelta(days=training_period + 1)
+    stock_data = stock_data.loc[
+        stock_data["ds"].dt.date > training_start,
+        :,
+    ].copy()
+    training_end = stock_data["ds"].max()
     with suppress_stdout_stderr():
         m = Prophet()
         m.fit(stock_data)
-        future = m.make_future_dataframe(90, include_history=False)
-        return (
+        future = m.make_future_dataframe(forecast_length, include_history=True)
+        forecast = (
             m.predict(future)[["ds", "yhat", "yhat_lower", "yhat_upper"]]
             .melt(id_vars="ds", var_name="metric")
             .rename(columns={"ds": "date"})
@@ -28,14 +36,24 @@ def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
                 stock_id=stock_id,
                 metric_id=lambda x: x.metric.map(
                     {
-                        "yhat": metric_id_cache.prediction,
+                        "yhat": metric_id_cache.adj_close,
                         "yhat_lower": metric_id_cache.prediction_lower,
                         "yhat_upper": metric_id_cache.prediction_upper,
                     }
                 ),
             )
-            .drop(columns=["metric", "date"])
         )
+    return forecast.loc[
+        forecast["date"] >= training_end,
+        [
+            "forecast_date_id",
+            "analytics_id",
+            "stock_id",
+            "metric_id",
+            "date_id",
+            "value",
+        ],
+    ]
 
 
 def validate_prophet_performance(stock_data, date_config, stock_id) -> pd.DataFrame:
