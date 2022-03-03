@@ -24,70 +24,9 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
     training_period, forecast_length = 270, 90
     stock_data, training_end = get_training_parameters(stock_data, training_period)
 
-    stock_data["adj_close"] = stock_data["y"]
-    stock_data = transform_prediction_and_create_x(stock_data)
-
-    if len(stock_data) < training_period:
-        training_period = len(stock_data)
-
-    stock_data = create_features(stock_data)
-    x, y = get_xy(stock_data, training_period)
-    m = Model(**kwargs).fit(x, y)
-    stock_data = (
-        pd.DataFrame(
-            {
-                "ds": pd.date_range(
-                    stock_data["ds"].min(),
-                    stock_data["ds"].max() + dt.timedelta(days=forecast_length),
-                )
-            }
-        )
-        .merge(stock_data, on="ds", how="left")
-        .rename(columns={"ds": "date"})
-        .merge(date_config, on="date", how="inner")
+    stock_data = predict_forward(
+        Model, stock_data, date_config, training_period, forecast_length, kwargs
     )
-    date_id_zero = int(stock_data["date_id"].min())
-
-    for days_forward in np.arange(0, forecast_length):
-        x_pred, y_pred = get_xy(
-            stock_data.iloc[: (training_period + days_forward), :],
-            training_period + days_forward,
-        )
-        y_hat = m.predict(x_pred)
-        stock_data["y_hat"] = np.concatenate(
-            (
-                y_hat,
-                np.where(
-                    np.zeros(shape=(forecast_length - days_forward,)) == 0,
-                    np.nan,
-                    0,
-                ),
-            ),
-        )
-        t_plus_one = date_id_zero + (training_period + days_forward)
-        if days_forward == 0:
-            stock_data["x"] = np.where(
-                stock_data["date_id"] == t_plus_one,
-                stock_data["y"].shift(),
-                stock_data["x"],
-            )
-            stock_data["adj_close"] = np.where(
-                stock_data["date_id"] == t_plus_one,
-                unscale_natural_log(stock_data["x"]) * stock_data["adj_close"].shift(),
-                stock_data["adj_close"],
-            )
-        else:
-            stock_data["x"] = np.where(
-                stock_data["date_id"] == t_plus_one,
-                stock_data["y_hat"].shift(),
-                stock_data["x"],
-            )
-            stock_data["adj_close"] = np.where(
-                stock_data["date_id"] == t_plus_one,
-                unscale_natural_log(stock_data["x"]) * stock_data["adj_close"].shift(),
-                stock_data["adj_close"],
-            )
-        stock_data = create_features(stock_data)
 
     stock_data = stock_data.assign(
         forecast_date_id=date_id_cache.todays_id,
@@ -166,6 +105,73 @@ def validate_performance(
         .assign(forecast_date_id=date_id_cache.todays_id)
         .loc[:, extract_columns(AnalyticsValues)]
     )
+
+
+def predict_forward(
+    Model, stock_data, date_config, training_period, forecast_length, kwargs
+):
+    stock_data["adj_close"] = stock_data["y"]
+    stock_data = transform_prediction_and_create_x(stock_data)
+
+    if len(stock_data) < training_period:
+        training_period = len(stock_data)
+
+    stock_data = create_features(stock_data)
+    x, y = get_xy(stock_data, training_period)
+    m = Model(**kwargs).fit(x, y)
+    stock_data = (
+        pd.DataFrame(
+            {
+                "ds": pd.date_range(
+                    stock_data["ds"].min(),
+                    stock_data["ds"].max() + dt.timedelta(days=forecast_length),
+                )
+            }
+        )
+        .merge(stock_data, on="ds", how="left")
+        .rename(columns={"ds": "date"})
+        .merge(date_config, on="date", how="inner")
+    )
+    date_id_zero = int(stock_data["date_id"].min())
+
+    for days_forward in np.arange(0, forecast_length):
+        x_pred, y_pred = get_xy(
+            stock_data.iloc[: (training_period + days_forward), :],
+            training_period + days_forward,
+        )
+        y_hat = m.predict(x_pred)
+        stock_data["y_hat"] = np.concatenate(
+            (
+                y_hat,
+                np.where(
+                    np.zeros(shape=(forecast_length - days_forward,)) == 0,
+                    np.nan,
+                    0,
+                ),
+            ),
+        )
+        t_plus_one = date_id_zero + (training_period + days_forward)
+        if days_forward == 0:
+            stock_data = assign_forward_iteration(stock_data, t_plus_one)
+        else:
+            stock_data = assign_forward_iteration(stock_data, t_plus_one, y="y_hat")
+        stock_data = create_features(stock_data)
+    return stock_data
+
+
+def assign_forward_iteration(stock_data, t_id, x="x", y="y", accumulation="adj_close"):
+    stock_data[x] = np.where(
+        stock_data["date_id"] == t_id,
+        stock_data[y].shift(),
+        stock_data[x],
+    )
+    if accumulation is not None:
+        stock_data[accumulation] = np.where(
+            stock_data["date_id"] == t_id,
+            unscale_natural_log(stock_data[x]) * stock_data[accumulation].shift(),
+            stock_data[accumulation],
+        )
+    return stock_data
 
 
 def transform_prediction_and_create_x(stock_data: pd.DataFrame) -> pd.DataFrame:
