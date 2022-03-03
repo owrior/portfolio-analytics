@@ -3,15 +3,12 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import make_scorer
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import cross_validate
 
 from pfa.analytics.data_manipulation import clear_previous_analytics
 from pfa.analytics.data_manipulation import create_time_windows
 from pfa.analytics.data_manipulation import get_training_parameters
 from pfa.analytics.data_manipulation import unscale_natural_log
+from pfa.analytics.calculated_metrics import rmse, rmsle
 from pfa.db_admin import extract_columns
 from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
@@ -23,6 +20,18 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
     clear_previous_analytics(stock_id, analytics_id_cache.xgboost)
     training_period, forecast_length = 270, 90
     stock_data, training_end = get_training_parameters(stock_data, training_period)
+
+    stock_data["adj_close"] = stock_data["y"]
+    stock_data = transform_prediction_and_create_x(stock_data)
+
+    if len(stock_data) < training_period:
+        training_period = len(stock_data)
+
+    stock_data = stock_data.loc[
+        stock_data["ds"].dt.date >= dt.date.today() - dt.timedelta(days=360)
+    ].reset_index(drop=True)
+
+    stock_data = create_features(stock_data)
 
     stock_data = predict_forward(
         Model, stock_data, date_config, training_period, forecast_length, kwargs
@@ -51,25 +60,12 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
 def validate_performance(
     Model, stock_data, date_config, stock_id, analytics_id, kwargs
 ):
-    scoring = {
-        key: make_scorer(func)
-        for key, func in {
-            "mean_absolute_error": mean_absolute_error,
-            "mean_squared_error": mean_squared_error,
-            "mean_squared_log_error": lambda y_true, y_pred: np.sqrt(
-                np.mean(np.square(np.log(y_true + 1) - np.log(y_pred + 1)))
-            ),
-        }.items()
-    }
-    score_mapping = {
-        "mean_absolute_error": metric_id_cache.mean_abs_error,
-        "mean_squared_error": metric_id_cache.rmse,
-        "mean_squared_log_error": metric_id_cache.rmsle,
-    }
     clear_previous_analytics(stock_id, analytics_id_cache.xgboost, validation=True)
 
+    stock_data["adj_close"] = stock_data["y"]
     stock_data = transform_prediction_and_create_x(stock_data)
     stock_data = create_features(stock_data)
+
     stock_data = stock_data.loc[
         stock_data["ds"].dt.date >= dt.date.today() - dt.timedelta(days=360)
     ].reset_index(drop=True)
@@ -79,25 +75,24 @@ def validate_performance(
 
     scores = []
     for shard in stock_data_shards:
-        x, y = get_xy(shard, window_size)
-        model = Model(**kwargs).fit(x, y)
-        scores.append(
-            pd.DataFrame(cross_validate(model, x, y, scoring=scoring, cv=5))
-            .mean()
-            .reset_index()
-            .rename(columns={0: "value"})
-            .assign(
-                analytics_id=analytics_id,
-                stock_id=stock_id,
-                date=shard["ds"].max(),
-                metric_id=lambda x: x["index"].map(
-                    {"test_" + key: val for key, val in score_mapping.items()}
-                ),
-                value=lambda x: x["value"],
+        slice_size = np.floor(window_size / 2).astype(int)
+        forecast_length = 10
+        training_period = slice_size - forecast_length
+        slices = create_time_windows(shard, 7, slice_size)
+        for slice in slices:
+            columns = ["date"]
+            training_slice, test_slice = (
+                slice.iloc[0:training_period, :],
+                slice.iloc[training_period:, :],
             )
-            .drop(columns="index")
-            .dropna()
-        )
+            predicted_data = predict_forward(
+                Model,
+                training_slice,
+                date_config,
+                training_period,
+                forecast_length,
+                kwargs,
+            ).iloc[training_period:]
 
     return (
         pd.concat(scores)
@@ -110,13 +105,6 @@ def validate_performance(
 def predict_forward(
     Model, stock_data, date_config, training_period, forecast_length, kwargs
 ):
-    stock_data["adj_close"] = stock_data["y"]
-    stock_data = transform_prediction_and_create_x(stock_data)
-
-    if len(stock_data) < training_period:
-        training_period = len(stock_data)
-
-    stock_data = create_features(stock_data)
     x, y = get_xy(stock_data, training_period)
     m = Model(**kwargs).fit(x, y)
     stock_data = (
@@ -150,6 +138,7 @@ def predict_forward(
                 ),
             ),
         )
+        stock_data = calculate_adj_close(stock_data)
         t_plus_one = date_id_zero + (training_period + days_forward)
         if days_forward == 0:
             stock_data = assign_forward_iteration(stock_data, t_plus_one)
@@ -159,18 +148,21 @@ def predict_forward(
     return stock_data
 
 
-def assign_forward_iteration(stock_data, t_id, x="x", y="y", accumulation="adj_close"):
+def assign_forward_iteration(stock_data, t_id, x="x", y="y"):
     stock_data[x] = np.where(
         stock_data["date_id"] == t_id,
         stock_data[y].shift(),
         stock_data[x],
     )
-    if accumulation is not None:
-        stock_data[accumulation] = np.where(
-            stock_data["date_id"] == t_id,
-            unscale_natural_log(stock_data[x]) * stock_data[accumulation].shift(),
-            stock_data[accumulation],
-        )
+    return stock_data
+
+
+def calculate_adj_close(stock_data):
+    stock_data["adj_close"] = np.where(
+        stock_data["adj_close"].isna(),
+        unscale_natural_log(stock_data["y_hat"]) * stock_data["adj_close"].shift(),
+        stock_data["adj_close"],
+    )
     return stock_data
 
 

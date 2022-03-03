@@ -12,7 +12,7 @@ logger = logging.get_logger(__file__)
 def run_model_validation():
     validation_results = []
     logger.info("Prophet validation")
-    validation_results.append(loop_through_stocks(validate_prophet_performance))
+    # validation_results.append(loop_through_stocks(validate_prophet_performance))
     logger.info("XGBoost validation")
     validation_results.append(loop_through_stocks(validate_xgboost_performance))
 
