@@ -14,9 +14,14 @@ from pfa.analytics.data_manipulation import loop_through_stocks
     "time_series_data",
     [
         pytest.param(
-            pd.DataFrame({"date": pd.date_range("2020-01-01", "2020-06-01")}).assign(
+            pd.DataFrame({"date": pd.date_range("2020-01-01", periods=360)}).assign(
                 Value=1
             )
+        ),
+        pytest.param(
+            pd.DataFrame({"date": pd.date_range("2020-01-01", periods=360)})
+            .assign(Value=1)
+            .iloc[1:, :]
         ),
     ],
 )

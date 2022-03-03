@@ -128,12 +128,13 @@ def validate_performance(
         "mean_squared_log_error": metric_id_cache.rmsle,
     }
     clear_previous_analytics(stock_id, analytics_id_cache.xgboost, validation=True)
+
+    stock_data = transform_prediction_and_create_x(stock_data)
+    stock_data = create_features(stock_data)
     stock_data = stock_data.loc[
         stock_data["ds"].dt.date >= dt.date.today() - dt.timedelta(days=360)
     ].reset_index(drop=True)
 
-    stock_data = transform_prediction_and_create_x(stock_data)
-    stock_data = create_features(stock_data)
     window_size = int(min(len(stock_data) / 3, 90))
     stock_data_shards = create_time_windows(stock_data, 30, window_size)
 

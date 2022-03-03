@@ -22,6 +22,8 @@ def create_time_windows(
     time_series_data: pd.DataFrame, window_distance: int, window_size: int
 ) -> List[pd.DataFrame]:
     """
+    Creates rolling time windows for analysis.
+
     Parameters
     ----------
     time_series_data : pd.DataFrame
@@ -40,19 +42,7 @@ def create_time_windows(
         )
         + np.remainder(index_values.shape[0] - window_size, window_distance)
     ]
-
-    # TODO: Patch bug happening  when df len 727, 723 is split
-    def try_loc(index, ts):
-        try:
-            return ts.iloc[index, :]
-        except IndexError:
-            return None
-
-    return [
-        try_loc(index, time_series_data)
-        for index in index_list
-        if try_loc(index, time_series_data) is not None
-    ]
+    return [time_series_data.iloc[index - index_values[0], :] for index in index_list]
 
 
 def loop_through_stocks(func) -> Any:

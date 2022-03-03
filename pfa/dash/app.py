@@ -9,7 +9,7 @@ from dash import html
 from pfa.dash.pages import forecasting_tools
 from pfa.dash.pages import index
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.SPACELAB])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUX])
 server = app.server
 
 base_content = html.Div(
