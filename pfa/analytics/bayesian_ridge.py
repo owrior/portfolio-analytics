@@ -1,29 +1,29 @@
-from xgboost import XGBRegressor
+from sklearn.linear_model import BayesianRidge
 
 from pfa.analytics.sklearn import forecast
 from pfa.analytics.sklearn import validate_performance
 from pfa.id_cache import analytics_id_cache
 
-KWARGS = {"eta": 0.1}
+KWARGS = {}
 
 
-def xgboost_forecast(stock_data, date_config, stock_id):
+def baysian_ridge_forecast(stock_data, date_config, stock_id):
     return forecast(
-        XGBRegressor,
+        BayesianRidge,
         stock_data,
         date_config,
         stock_id,
-        analytics_id_cache.xgboost,
+        analytics_id_cache.bayesian_ridge,
         KWARGS,
     )
 
 
-def validate_xgboost_performance(stock_data, date_config, stock_id):
+def validate_baysian_ridge_performance(stock_data, date_config, stock_id):
     return validate_performance(
-        XGBRegressor,
+        BayesianRidge,
         stock_data,
         date_config,
         stock_id,
-        analytics_id_cache.xgboost,
+        analytics_id_cache.bayesian_ridge,
         KWARGS,
     )

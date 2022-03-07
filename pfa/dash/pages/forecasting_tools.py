@@ -75,8 +75,8 @@ def update_validation_figure(stock):
             x="Date",
             y="RMSE",
             color="Analysis",
-            facet_col="metric",
-        )
+            facet_row="metric",
+        ).update_yaxes(matches=None)
     )
 
 

@@ -4,15 +4,24 @@ import os
 import numpy as np
 import pandas as pd
 from prophet import Prophet
+from prophet.diagnostics import cross_validation
+from prophet.diagnostics import performance_metrics
 
 from pfa.analytics.data_manipulation import clear_previous_analytics
 from pfa.analytics.data_manipulation import create_time_windows
 from pfa.analytics.data_manipulation import get_training_parameters
+from pfa.analytics.calculated_metrics import rmse, rmsle, smape
 from pfa.db_admin import extract_columns
-from pfa.id_cache import analytics_id_cache
+from pfa.id_cache import MetricIDCache, analytics_id_cache
 from pfa.id_cache import date_id_cache
 from pfa.id_cache import metric_id_cache
 from pfa.models.values import AnalyticsValues
+
+
+def get_prophet_model():
+    return Prophet(daily_seasonality=False, yearly_seasonality=False).add_seasonality(
+        name="quarterly", period=365.25 / 4, fourier_order=5, prior_scale=15
+    )
 
 
 def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
@@ -20,7 +29,7 @@ def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
     training_period, forecast_length = 270, 90
     stock_data, training_end = get_training_parameters(stock_data, training_period)
     with suppress_stdout_stderr():
-        m = Prophet()
+        m = get_prophet_model()
         m.fit(stock_data)
         future = m.make_future_dataframe(forecast_length, include_history=True)
         forecast = (
@@ -52,32 +61,39 @@ def validate_prophet_performance(stock_data, date_config, stock_id) -> pd.DataFr
     stock_data = stock_data.loc[
         stock_data["ds"].dt.date >= dt.date.today() - dt.timedelta(days=360)
     ].reset_index(drop=True)
-    stock_data_shards = create_time_windows(
-        stock_data, 30, int(min(len(stock_data) / 3, 90))
-    )
-    with suppress_stdout_stderr():
-        models = [Prophet().fit(data_shard) for data_shard in stock_data_shards]
-        futures = [m.make_future_dataframe(0, include_history=True) for m in models]
-        prediction_shards = [
-            model.predict(future)[["ds", "yhat"]]
-            for model, future in zip(models, futures)
-        ]
-    validation_metrics = pd.concat(
+    cutoffs = pd.to_datetime(
         [
-            generate_validation_metrics(stock_data_shard, prediction_shard)
-            for stock_data_shard, prediction_shard in zip(
-                stock_data_shards, prediction_shards
+            shard["ds"].min()
+            for shard in create_time_windows(
+                stock_data, 30, int(min(len(stock_data) / 3, 90))
             )
         ]
     )
+    with suppress_stdout_stderr():
+        m = get_prophet_model().fit(stock_data)
+        cv = cross_validation(m, cutoffs=cutoffs, horizon="30 days")
+        validation_metrics = []
+        for function, metric_id in zip(
+            [rmse, rmsle, smape],
+            [metric_id_cache.rmse, metric_id_cache.rmsle, metric_id_cache.smape],
+        ):
+            validation_metrics.append(
+                cv.groupby("cutoff")["y", "yhat"]
+                .apply(lambda x: function(x["y"], x["yhat"]))
+                .reset_index()
+                .rename(columns={"cutoff": "date", 0: "value"})
+                .assign(
+                    metric_id=metric_id,
+                    date=lambda x: x["date"] + dt.timedelta(days=30),
+                )
+            )
     return (
-        validation_metrics.melt(id_vars="date", var_name="metric_id")
+        pd.concat(validation_metrics)
         .merge(date_config, on="date", how="inner")
         .assign(
             forecast_date_id=date_id_cache.todays_id,
             analytics_id=analytics_id_cache.prophet,
             stock_id=stock_id,
-            value=lambda x: np.round(x["value"], decimals=4),
         )
         .loc[:, extract_columns(AnalyticsValues)]
     )

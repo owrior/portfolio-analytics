@@ -81,6 +81,10 @@ class MetricIDCache(IDCache):
     def rmsle(self):
         return self.get_id("RMSLE")
 
+    @property
+    def smape(self):
+        return self.get_id("sMAPE")
+
 
 class AnalyticsIDCache(IDCache):
     id_column = "analysis_id"
@@ -94,6 +98,10 @@ class AnalyticsIDCache(IDCache):
     @property
     def xgboost(self):
         return self.get_id("XGBoost Regression")
+
+    @property
+    def bayesian_ridge(self):
+        return self.get_id("Bayesian Ridge Regression")
 
 
 class DateIDCache(IDCache):

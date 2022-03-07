@@ -8,7 +8,7 @@ from pfa.analytics.data_manipulation import clear_previous_analytics
 from pfa.analytics.data_manipulation import create_time_windows
 from pfa.analytics.data_manipulation import get_training_parameters
 from pfa.analytics.data_manipulation import unscale_natural_log
-from pfa.analytics.calculated_metrics import rmse, rmsle
+from pfa.analytics.calculated_metrics import rmse, rmsle, smape
 from pfa.db_admin import extract_columns
 from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
@@ -75,24 +75,54 @@ def validate_performance(
 
     scores = []
     for shard in stock_data_shards:
-        slice_size = np.floor(window_size / 2).astype(int)
-        forecast_length = 10
-        training_period = slice_size - forecast_length
-        slices = create_time_windows(shard, 7, slice_size)
-        for slice in slices:
-            columns = ["date"]
-            training_slice, test_slice = (
-                slice.iloc[0:training_period, :],
-                slice.iloc[training_period:, :],
-            )
+        x, y = get_xy(shard, window_size)
+        m = Model(**kwargs).fit(x, y)
+        comparisons = []
+        for row_start in np.arange(28, len(shard) - 28, step=7):
+            predict_from = shard.iloc[:row_start]
             predicted_data = predict_forward(
-                Model,
-                training_slice,
+                m,
+                predict_from,
                 date_config,
-                training_period,
-                forecast_length,
+                row_start,
+                np.min([30, len(shard) - row_start]),
                 kwargs,
-            ).iloc[training_period:]
+                trained=True,
+            )
+            comparisons.append(
+                predicted_data.loc[
+                    predicted_data["y"].isna(), ["date", "y_hat", "adj_close"]
+                ]
+                .rename(columns={"adj_close": "adj_close_hat"})
+                .merge(
+                    shard.rename(columns={"ds": "date"}).loc[
+                        :, ["date", "y", "adj_close"]
+                    ],
+                    on="date",
+                    how="inner",
+                )
+            )
+        comparisons = pd.concat(comparisons)
+        scores.append(
+            pd.DataFrame(
+                {
+                    "metric_id": [
+                        metric_id_cache.rmse,
+                        metric_id_cache.rmsle,
+                        metric_id_cache.smape,
+                    ],
+                    "value": [
+                        rmse(comparisons["adj_close"], comparisons["adj_close_hat"]),
+                        rmsle(comparisons["adj_close"], comparisons["adj_close_hat"]),
+                        smape(comparisons["adj_close"], comparisons["adj_close_hat"]),
+                    ],
+                }
+            ).assign(
+                analytics_id=analytics_id,
+                stock_id=stock_id,
+                date=shard["ds"].max(),
+            )
+        )
 
     return (
         pd.concat(scores)
@@ -103,16 +133,25 @@ def validate_performance(
 
 
 def predict_forward(
-    Model, stock_data, date_config, training_period, forecast_length, kwargs
+    Model,
+    stock_data,
+    date_config,
+    training_period,
+    forecast_length,
+    kwargs,
+    trained=False,
 ):
-    x, y = get_xy(stock_data, training_period)
-    m = Model(**kwargs).fit(x, y)
+    if trained:
+        m = Model
+    else:
+        x, y = get_xy(stock_data, training_period)
+        m = Model(**kwargs).fit(x, y)
     stock_data = (
         pd.DataFrame(
             {
                 "ds": pd.date_range(
                     stock_data["ds"].min(),
-                    stock_data["ds"].max() + dt.timedelta(days=forecast_length),
+                    stock_data["ds"].max() + dt.timedelta(days=int(forecast_length)),
                 )
             }
         )
@@ -122,7 +161,7 @@ def predict_forward(
     )
     date_id_zero = int(stock_data["date_id"].min())
 
-    for days_forward in np.arange(0, forecast_length):
+    for days_forward in np.arange(0, forecast_length + 1):
         x_pred, y_pred = get_xy(
             stock_data.iloc[: (training_period + days_forward), :],
             training_period + days_forward,
@@ -138,13 +177,12 @@ def predict_forward(
                 ),
             ),
         )
-        stock_data = calculate_adj_close(stock_data)
         t_plus_one = date_id_zero + (training_period + days_forward)
         if days_forward == 0:
             stock_data = assign_forward_iteration(stock_data, t_plus_one)
         else:
             stock_data = assign_forward_iteration(stock_data, t_plus_one, y="y_hat")
-        stock_data = create_features(stock_data)
+        stock_data = stock_data.pipe(calculate_adj_close).pipe(create_features)
     return stock_data
 
 
