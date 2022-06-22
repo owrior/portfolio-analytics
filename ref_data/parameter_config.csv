@@ -1,2 +1,0 @@
-parameter_id;currency_id;parameter;url;resource_name;description
-1;2;US Natural Gas Prices;https://datahub.io/core/natural-gas/datapackage.json;daily;US natural gas prices in dollars.

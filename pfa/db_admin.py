@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pandas as pd
 import sqlalchemy as sqa
 from sqlalchemy_utils import create_database
@@ -28,7 +26,7 @@ def insert_ref_data():
     date_config = _get_dates()
     frame_to_sql(date_config, "date_config")
 
-    ref_data_folder = Path(__file__).parents[1] / "ref_data"
+    ref_data_folder = "ref_data"
 
     ref_data_files = ref_data_folder.glob("*.csv")
 
