@@ -1,5 +1,4 @@
 from prefect import Flow
-from prefect import task
 
 from pfa.web_access.datahub import populate_datahub_parameter_values
 from pfa.web_access.update import get_most_recent_datahub_parameter_dates
