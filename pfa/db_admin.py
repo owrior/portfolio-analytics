@@ -22,7 +22,6 @@ def initialise_database():
 
     create_database_from_model(engine)
     insert_ref_data()
-    execute_view_creation()
 
 
 def insert_ref_data():
