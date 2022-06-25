@@ -32,7 +32,7 @@ class MetricConfig(Base):
 class ParameterConfig(Base):
     __tablename__ = "parameter_config"
     parameter_id = Column(Integer, primary_key=True)
-    currency_id = Column(Integer)
+    currency = Column(String(5))
     parameter = Column(String(30))
     url = Column(String(100))
     resource_name = Column(String(100))

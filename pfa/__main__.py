@@ -1,7 +1,7 @@
 import argparse
 from importlib import import_module
 
-from pfa.dash.app import app
+# from pfa.dash.app import app
 
 
 def main():
@@ -14,8 +14,8 @@ def main():
         workflow = import_module(f"pfa.workflows.{args.workflow}")
         workflow.flow.run()
 
-    if args.dashboard:
-        app.run_server(debug=True)
+    # if args.dashboard:
+    #     app.run_server(debug=True)
 
 
 if __name__ == "__main__":

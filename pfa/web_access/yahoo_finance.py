@@ -1,6 +1,7 @@
 import datetime as dt
 
 import pandas as pd
+import prefect
 import yfinance as yf
 from prefect.utilities import logging
 from sqlalchemy.orm import Query
@@ -10,30 +11,24 @@ from pfa.models.config import DateConfig
 from pfa.models.config import MetricConfig
 from pfa.readwrite import frame_to_sql
 from pfa.readwrite import read_sql
-from pfa.web_access.update import get_most_recent_stock_dates
 
 logger = logging.get_logger(__file__)
 
 
-def populate_yahoo_stock_values():
+@prefect.task
+def populate_yahoo_stock_values(stock_dates):
     date_config, metric_config = _get_config_tables()
-    stock_dates = get_most_recent_stock_dates()
-    tickers = stock_dates["yahoo_ticker"].to_list()
-
-    if len(tickers) == 0:
-        return None
 
     raw_stock_values = _download_stock_values(stock_dates)
 
-    if raw_stock_values is not None:
-        stock_values = _process_stock_values(raw_stock_values)
+    stock_values = _process_stock_values(raw_stock_values)
 
-        stock_values = (
-            stock_values.merge(date_config, on="date", how="inner")
-            .merge(metric_config, on="metric", how="inner")
-            .loc[:, ["stock_id", "date_id", "metric_id", "value"]]
-        )
-        frame_to_sql(stock_values, "stock_values")
+    stock_values = (
+        stock_values.merge(date_config, on="date", how="inner")
+        .merge(metric_config, on="metric", how="inner")
+        .loc[:, ["stock_id", "date_id", "metric_id", "value"]]
+    )
+    frame_to_sql(stock_values, "stock_values")
 
 
 def _get_config_tables():  # pragma: no cover
@@ -46,26 +41,23 @@ def _download_stock_values(
     stock_dates: pd.DataFrame,
 ) -> pd.DataFrame:  # pragma: no cover
     stock_values = []
-    yahoo_downloadable_stocks = stock_dates.dropna(subset=["yahoo_ticker"])
-    for _, row in tqdm(
-        yahoo_downloadable_stocks.iterrows(), total=len(yahoo_downloadable_stocks)
-    ):
-        start_date = (
-            pd.Timestamp(1900, 1, 1)
-            if row.date in (pd.NaT, None)
-            else pd.Timestamp(row.date + dt.timedelta(days=1))
-        )
 
-        if start_date.date() < get_last_business_day(dt.date.today()):
-            yf_data = yf.download(
-                tickers=row.yahoo_ticker, start=start_date, progress=False
-            ).assign(stock_id=row.stock_id)
+    start_date = (
+        pd.Timestamp(1900, 1, 1)
+        if stock_dates["date"] in (pd.NaT, None)
+        else pd.Timestamp(stock_dates["date"] + dt.timedelta(days=1))
+    )
 
-            # Additional filter required due to days before specified start
-            # date in yf.download being present.
-            stock_values.append(yf_data.loc[yf_data.index >= start_date])
+    if start_date.date() < get_last_business_day(dt.date.today()):
+        yf_data = yf.download(
+            tickers=stock_dates["yahoo_ticker"], start=start_date, progress=False
+        ).assign(stock_id=stock_dates["stock_id"])
+
+        # Additional filter required due to days before specified start
+        # date in yf.download being present.
+        stock_values.append(yf_data.loc[yf_data.index >= start_date])
     logger.info(f"Downloaded data for {len(stock_values)} tickers")
-    return pd.concat(stock_values) if len(stock_values) > 0 else None
+    return stock_values
 
 
 def get_last_business_day(day: dt.date) -> dt.date:

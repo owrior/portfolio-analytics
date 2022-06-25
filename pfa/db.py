@@ -12,7 +12,7 @@ PDB = "PFA"
 def get_engine(db_name: str = None) -> sqa.engine:
     if not db_name:
         db_name = PDB
-    url = f"postgres+psycopg2cffi://postgres:postgrespw@localhost:49153"
+    url = f"postgresql://postgres:postgrespw@localhost:49153/{PDB}"
     return sqa.create_engine(url)
 
 

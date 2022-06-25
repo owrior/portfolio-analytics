@@ -11,49 +11,49 @@ currency_config:
     symbol: $
 metric_config:
   - metric: Adj Close
-    validation: 0
+    validation: False
     description: Security closing price adjusted to account for any corporate action after closing.
   - metric: Close
-    validation: 0
+    validation: False
     description: Security price when the financial market is closed for the day.
   - metric: High
-    validation: 0
+    validation: False
     description: Securities highest trading price in the time period.
   - metric: Low
-    validation: 0
+    validation: False
     description: Securities lowest trading price in the time period.
   - metric: Open
-    validation: 0
+    validation: False
     description: Securities price at the open of the financial market.
   - metric: Volume
-    validation: 0
+    validation: False
     description: The amount of an asset or security which changes ownership over time.
   - metric: Log return
-    validation: 0
+    validation: False
     description: The proportion of return scaled using log.
   - metric: Prediction
-    validation: 0
+    validation: False
     description: A forcast value (y^).
   - metric: Prediction Upper
-    validation: 0
+    validation: False
     description: The upper value for the predicted value CI (y^ upper).
   - metric: Prediction Lower
-    validation: 0
+    validation: False
     description: The lower value for the predicted value CI (y^ lower).
   - metric: Mean error
-    validation: 1
+    validation: True
     description: The mean error. Does not measure the magnitude of errors.
   - metric: Mean (abs) error
-    validation: 1
+    validation: True
     description: The mean absolute error. Measures the magnitude of errors, not direction.
   - metric: RMSE
-    validation: 1
+    validation: True
     description: The root mean squared error. Increases significance of large errors.
   - metric: RMSLE
-    validation: 1
+    validation: True
     description: The root mean squared log error. Resistant to outliers and is respects significance of error size relative to prediction.
   - metric: sMAPE
-    validation: 1
+    validation: True
     description: Symmetric mean absolute percentage error.
 parameter_config:
   - parameter: US Natural Gas Prices
@@ -69,4 +69,3 @@ stock_config:
   - stock: Apple
     yahoo_ticker: AAPL
     industry: Technology
-
