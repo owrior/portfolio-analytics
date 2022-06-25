@@ -44,21 +44,21 @@ def _download_stock_values(
 ) -> pd.DataFrame:  # pragma: no cover
     start_date = (
         pd.Timestamp(1900, 1, 1)
-        if stock_dates["date"] in (pd.NaT, None)
-        else pd.Timestamp(stock_dates["date"] + dt.timedelta(days=1))
+        if stock_dates.date in (pd.NaT, None)
+        else pd.Timestamp(stock_dates.date + dt.timedelta(days=1))
     )
 
     if start_date.date() < get_last_business_day(dt.date.today()):
         yf_data = yf.download(
-            tickers=stock_dates["yahoo_ticker"], start=start_date, progress=False
-        ).assign(stock_id=stock_dates["stock_id"])
+            tickers=stock_dates.yahoo_ticker, start=start_date, progress=False
+        ).assign(stock_id=stock_dates.stock_id)
 
         # Additional filter required due to days before specified start
         # date in yf.download being present.
-        logger.info(f"Downloaded data for {stock_dates['yahoo_ticker']}")
+        logger.info(f"Downloaded data for {stock_dates.yahoo_ticker}")
         return yf_data.loc[yf_data.index >= start_date]
     else:
-        logger.info(f"Data for {stock_dates['yahoo_ticker']} is up to date.")
+        logger.info(f"Data for {stock_dates.yahoo_ticker} is up to date.")
         return None
 
 

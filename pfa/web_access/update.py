@@ -1,3 +1,4 @@
+import pandas as pd
 import prefect
 import sqlalchemy as sqa
 from sqlalchemy.orm import Query
@@ -23,15 +24,12 @@ def get_most_recent_stock_dates() -> dict:
         .join(DateConfig, StockValues.date_id == DateConfig.date_id, isouter=True)
         .group_by(StockConfig.stock_id)
     )
-    return [
-        {"yahoo_ticker": sd.yahoo_ticker, "stock_id": sd.stock_id, "date": sd.date}
-        for sd in stock_dates.itertuples()
-        if sd.yahoo_ticker is not None
-    ]
+    return [*stock_dates.itertuples()]
 
 
-def get_most_recent_datahub_parameter_dates():
-    parameter_config = read_sql(
+@prefect.task
+def get_most_recent_datahub_parameter_dates() -> dict:
+    parameter_dates = read_sql(
         Query(ParameterConfig)
         .with_entities(
             ParameterConfig.parameter_id.label("parameter_id"),
@@ -48,4 +46,4 @@ def get_most_recent_datahub_parameter_dates():
         .join(DateConfig, ParameterValues.date_id == DateConfig.date_id, isouter=True)
         .group_by(ParameterConfig.parameter_id)
     )
-    return parameter_config[["parameter_id", "url", "resource_name", "date"]]
+    return [*parameter_dates.itertuples()]
