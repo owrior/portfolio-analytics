@@ -5,7 +5,6 @@ import prefect
 import yfinance as yf
 from prefect.utilities import logging
 from sqlalchemy.orm import Query
-from tqdm import tqdm
 
 from pfa.models.config import DateConfig
 from pfa.models.config import MetricConfig
@@ -20,6 +19,9 @@ def populate_yahoo_stock_values(stock_dates):
     date_config, metric_config = _get_config_tables()
 
     raw_stock_values = _download_stock_values(stock_dates)
+
+    if raw_stock_values is None:
+        return None
 
     stock_values = _process_stock_values(raw_stock_values)
 
@@ -40,8 +42,6 @@ def _get_config_tables():  # pragma: no cover
 def _download_stock_values(
     stock_dates: pd.DataFrame,
 ) -> pd.DataFrame:  # pragma: no cover
-    stock_values = []
-
     start_date = (
         pd.Timestamp(1900, 1, 1)
         if stock_dates["date"] in (pd.NaT, None)
@@ -55,9 +55,11 @@ def _download_stock_values(
 
         # Additional filter required due to days before specified start
         # date in yf.download being present.
-        stock_values.append(yf_data.loc[yf_data.index >= start_date])
-    logger.info(f"Downloaded data for {len(stock_values)} tickers")
-    return stock_values
+        logger.info(f"Downloaded data for {stock_dates['yahoo_ticker']}")
+        return yf_data.loc[yf_data.index >= start_date]
+    else:
+        logger.info(f"Data for {stock_dates['yahoo_ticker']} is up to date.")
+        return None
 
 
 def get_last_business_day(day: dt.date) -> dt.date:
