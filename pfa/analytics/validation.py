@@ -1,11 +1,12 @@
 import imp
+
 import pandas as pd
 from prefect.utilities import logging
 
+from pfa.analytics.bayesian_ridge import validate_baysian_ridge_performance
 from pfa.analytics.data_manipulation import loop_through_stocks
 from pfa.analytics.prophet import validate_prophet_performance
 from pfa.analytics.xgboost import validate_xgboost_performance
-from pfa.analytics.bayesian_ridge import validate_baysian_ridge_performance
 from pfa.readwrite import frame_to_sql
 
 logger = logging.get_logger(__file__)

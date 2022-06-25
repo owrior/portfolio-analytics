@@ -13,4 +13,6 @@ def test_get_dates(date_config: pd.DataFrame):
 
 def test_insert_ref_data(mocker: MockerFixture):
     mocked_frame_to_sql = mocker.patch("pfa.db_admin.frame_to_sql")
-    result = insert_ref_data()
+    insert_ref_data()
+
+    mocked_frame_to_sql.assert_called()
