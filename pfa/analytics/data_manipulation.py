@@ -5,6 +5,7 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
+import prefect
 import sqlalchemy as sa
 from sqlalchemy.orm import Query
 from tqdm import tqdm
@@ -43,6 +44,37 @@ def create_time_windows(
         + np.remainder(index_values.shape[0] - window_size, window_distance)
     ]
     return [time_series_data.iloc[index - index_values[0], :] for index in index_list]
+
+
+@prefect.task
+def get_stock_ids() -> List[int]:
+    """
+    Fetches stock ids.
+    """
+    return read_sql(Query(StockValues).with_entities(StockValues.stock_id).distinct())[
+        "stock_id"
+    ].to_list()
+
+
+@prefect.task
+def get_stock_data_to_forecast(
+    stock_ids: List[int], date_config: pd.DataFrame
+) -> List[Tuple]:
+    """
+    Return tuples with stock ids and filled stock data.
+    """
+    return [
+        fill_stock_data_to_time_horizon(get_stock_data(stock_id), date_config)
+        for stock_id in stock_ids
+    ]
+
+
+@prefect.task
+def get_date_config() -> pd.DataFrame:
+    """
+    Return date_config tables.
+    """
+    return read_sql(Query(DateConfig))
 
 
 def loop_through_stocks(func) -> Any:

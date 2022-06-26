@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 import pandas as pd
+import prefect
 from prophet import Prophet
 from prophet.diagnostics import cross_validation
 from prophet.diagnostics import performance_metrics
@@ -19,6 +20,7 @@ from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
 from pfa.id_cache import metric_id_cache
 from pfa.models.values import AnalyticsValues
+from pfa.readwrite import frame_to_sql
 
 
 def get_prophet_model():
@@ -27,6 +29,7 @@ def get_prophet_model():
     )
 
 
+@prefect.task
 def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
     clear_previous_analytics(stock_id, analytics_id_cache.prophet)
     training_period, forecast_length = 270, 90
@@ -53,10 +56,12 @@ def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
                 ),
             )
         )
-    return forecast.loc[
+    forecast_ = forecast.loc[
         forecast["date"] >= training_end,
         extract_columns(AnalyticsValues),
     ]
+    frame_to_sql(forecast_, "analytics_values")
+    return None
 
 
 def validate_prophet_performance(stock_data, date_config, stock_id) -> pd.DataFrame:
