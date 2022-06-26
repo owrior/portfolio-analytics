@@ -1,5 +1,3 @@
-import imp
-
 import pandas as pd
 from prefect.utilities import logging
 

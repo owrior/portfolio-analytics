@@ -6,7 +6,6 @@ import pandas as pd
 import prefect
 from prophet import Prophet
 from prophet.diagnostics import cross_validation
-from prophet.diagnostics import performance_metrics
 
 from pfa.analytics.calculated_metrics import rmse
 from pfa.analytics.calculated_metrics import rmsle
@@ -15,7 +14,6 @@ from pfa.analytics.data_manipulation import clear_previous_analytics
 from pfa.analytics.data_manipulation import create_time_windows
 from pfa.analytics.data_manipulation import get_training_parameters
 from pfa.db_admin import extract_columns
-from pfa.id_cache import MetricIDCache
 from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
 from pfa.id_cache import metric_id_cache

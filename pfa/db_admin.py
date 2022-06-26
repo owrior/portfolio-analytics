@@ -8,7 +8,6 @@ from sqlalchemy_utils import drop_database
 
 from pfa.db import get_engine
 from pfa.models.model import create_database_from_model
-from pfa.models.model import execute_view_creation
 from pfa.readwrite import frame_to_sql
 
 

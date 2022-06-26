@@ -1,4 +1,3 @@
-import pandas as pd
 import prefect
 import sqlalchemy as sqa
 from sqlalchemy.orm import Query
