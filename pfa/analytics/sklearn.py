@@ -4,11 +4,13 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 
+from pfa.analytics.calculated_metrics import rmse
+from pfa.analytics.calculated_metrics import rmsle
+from pfa.analytics.calculated_metrics import smape
 from pfa.analytics.data_manipulation import clear_previous_analytics
 from pfa.analytics.data_manipulation import get_cutoffs
 from pfa.analytics.data_manipulation import get_training_parameters
 from pfa.analytics.data_manipulation import unscale_natural_log
-from pfa.analytics.calculated_metrics import rmse, rmsle, smape
 from pfa.db_admin import extract_columns
 from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
@@ -18,6 +20,7 @@ from pfa.models.values import AnalyticsValues
 
 def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
     clear_previous_analytics(stock_id, analytics_id_cache.xgboost)
+    stock_data = stock_data.copy()
     training_period, forecast_length = 270, 90
     stock_data, training_end = get_training_parameters(stock_data, training_period)
 
@@ -60,6 +63,7 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
 def validate_performance(
     Model, stock_data, date_config, stock_id, analytics_id, kwargs
 ):
+    stock_data = stock_data.copy()
     clear_previous_analytics(stock_id, analytics_id, validation=True)
 
     stock_data["adj_close"] = stock_data["y"]

@@ -1,3 +1,4 @@
+import prefect
 from prefect.utilities import logging
 
 from pfa.db import execute_query
@@ -19,6 +20,7 @@ def create_database_from_model(engine):
     logger.info("Created database metadata")
 
 
+@prefect.task
 def execute_view_creation():
     [execute_query(view) for view in get_view_creation()]
     logger.info("Created views")

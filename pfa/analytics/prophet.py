@@ -3,18 +3,23 @@ import os
 
 import numpy as np
 import pandas as pd
+import prefect
 from prophet import Prophet
 from prophet.diagnostics import cross_validation
 
+from pfa.analytics.calculated_metrics import rmse
+from pfa.analytics.calculated_metrics import rmsle
+from pfa.analytics.calculated_metrics import smape
 from pfa.analytics.data_manipulation import clear_previous_analytics
 from pfa.analytics.data_manipulation import get_training_parameters
 from pfa.analytics.calculated_metrics import get_metric_function_mapping
 from pfa.analytics.data_manipulation import get_cutoffs
 from pfa.db_admin import extract_columns
-from pfa.id_cache import MetricIDCache, analytics_id_cache
+from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
 from pfa.id_cache import metric_id_cache
 from pfa.models.values import AnalyticsValues
+from pfa.readwrite import frame_to_sql
 
 
 def get_prophet_model():
@@ -23,8 +28,10 @@ def get_prophet_model():
     )
 
 
+@prefect.task
 def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
     clear_previous_analytics(stock_id, analytics_id_cache.prophet)
+    stock_data = stock_data.copy()
     training_period, forecast_length = 270, 90
     stock_data, training_end = get_training_parameters(stock_data, training_period)
     with suppress_stdout_stderr():
@@ -49,14 +56,18 @@ def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
                 ),
             )
         )
-    return forecast.loc[
+    forecast_ = forecast.loc[
         forecast["date"] >= training_end,
         extract_columns(AnalyticsValues),
     ]
+    frame_to_sql(forecast_, "analytics_values")
+    return None
 
 
+@prefect.task
 def validate_prophet_performance(stock_data, date_config, stock_id) -> pd.DataFrame:
     clear_previous_analytics(stock_id, analytics_id_cache.prophet, validation=True)
+    stock_data = stock_data.copy()
     stock_data = stock_data.loc[
         stock_data["ds"].dt.date >= dt.date.today() - dt.timedelta(days=360)
     ].reset_index(drop=True)
