@@ -18,7 +18,7 @@ repos:
     rev: 4.0.1
     hooks:
       - id: flake8
-        args: ["--ignore=E501,F401,F821,E203,W503", "--max-line-length=88"]
+        args: ["--ignore=E501,F821,E203,W503", "--max-line-length=88"]
 
 # Black
 
