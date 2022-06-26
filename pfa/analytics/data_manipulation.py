@@ -1,5 +1,4 @@
 import datetime as dt
-from typing import Any
 from typing import List
 from typing import Tuple
 
@@ -8,12 +7,10 @@ import pandas as pd
 import prefect
 import sqlalchemy as sa
 from sqlalchemy.orm import Query
-from tqdm import tqdm
 
 from pfa.db import execute_query
 from pfa.id_cache import metric_id_cache
 from pfa.models.config import DateConfig
-from pfa.models.config import StockConfig
 from pfa.models.values import AnalyticsValues
 from pfa.models.values import StockValues
 from pfa.readwrite import read_sql
@@ -75,20 +72,6 @@ def get_date_config() -> pd.DataFrame:
     Return date_config tables.
     """
     return read_sql(Query(DateConfig))
-
-
-def loop_through_stocks(func) -> Any:
-    stock_config = read_sql(Query(StockConfig))
-    date_config = read_sql(Query(DateConfig))
-
-    function_results = []
-
-    for _, row in tqdm(stock_config.iterrows(), total=len(stock_config)):
-        stock_data = get_stock_data(row.stock_id)
-        if not stock_data.empty:
-            stock_data = fill_stock_data_to_time_horizon(stock_data, date_config)
-            function_results.append(func(stock_data, date_config, row.stock_id))
-    return pd.concat(function_results)
 
 
 def fill_stock_data_to_time_horizon(
