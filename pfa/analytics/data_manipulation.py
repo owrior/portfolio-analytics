@@ -51,7 +51,12 @@ def get_cutoffs(dates: pd.Series, initial: int = None, step_size: int = None):
     if step_size is None:
         step_size = total_period // 12
     total_horizons = int(np.ceil((total_period - initial) / step_size))
-    return [dates[initial + (n * step_size)] for n in range(total_horizons)]
+    cutoffs = [dates[initial + (n * step_size) - 1] for n in range(total_horizons)]
+    return [
+        cutoff
+        for cutoff in cutoffs
+        if (dates.iloc[-1] - cutoff) >= dt.timedelta(days=30)
+    ]
 
 
 @prefect.task

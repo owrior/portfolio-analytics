@@ -7,13 +7,10 @@ import prefect
 from prophet import Prophet
 from prophet.diagnostics import cross_validation
 
-from pfa.analytics.calculated_metrics import rmse
-from pfa.analytics.calculated_metrics import rmsle
-from pfa.analytics.calculated_metrics import smape
-from pfa.analytics.data_manipulation import clear_previous_analytics
-from pfa.analytics.data_manipulation import get_training_parameters
 from pfa.analytics.calculated_metrics import get_metric_function_mapping
+from pfa.analytics.data_manipulation import clear_previous_analytics
 from pfa.analytics.data_manipulation import get_cutoffs
+from pfa.analytics.data_manipulation import get_training_parameters
 from pfa.db_admin import extract_columns
 from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
@@ -71,9 +68,8 @@ def validate_prophet_performance(stock_data, date_config, stock_id) -> pd.DataFr
     stock_data = stock_data.loc[
         stock_data["ds"].dt.date >= dt.date.today() - dt.timedelta(days=360)
     ].reset_index(drop=True)
-    cutoffs = [
-        x - dt.timedelta(days=30) for x in get_cutoffs(stock_data["ds"], 180, 30)
-    ]
+    cutoffs = get_cutoffs(stock_data["ds"], 180, 30)
+
     with suppress_stdout_stderr():
         m = get_prophet_model().fit(stock_data)
         cv = cross_validation(m, cutoffs=cutoffs, horizon="30 days")

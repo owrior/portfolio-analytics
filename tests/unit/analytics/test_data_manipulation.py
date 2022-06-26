@@ -1,13 +1,12 @@
+import datetime as dt
+
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
 from pytest_mock import MockerFixture
-from sqlalchemy.orm import Query
 
 from pfa.analytics.data_manipulation import create_time_windows
 from pfa.analytics.data_manipulation import fill_stock_data_to_time_horizon
-from pfa.analytics.data_manipulation import loop_through_stocks
 from pfa.analytics.data_manipulation import get_cutoffs
 
 
@@ -59,12 +58,19 @@ def test_create_time_windows(
 
 
 @pytest.mark.parametrize(
-    "dates", [pytest.param(pd.date_range("2020-01-01", periods=360))]
+    "dates",
+    [
+        pytest.param(pd.date_range("2020-01-01", periods=365)),
+        pytest.param(pd.date_range("2020-01-01", periods=365)),
+    ],
 )
 @pytest.mark.parametrize("initial, horizon", [pytest.param(180, 30)])
 def test_get_cutoffs(dates, initial, horizon):
     cutoffs = get_cutoffs(dates, initial, horizon)
-    assert len(dates) - initial == len(dates.where(dates < cutoffs[0]).dropna())
+    cutoff_frame = pd.DataFrame({"cutoff": cutoffs})
+
+    assert (cutoff_frame["cutoff"].diff().dropna() == dt.timedelta(days=30)).all()
+    assert (dates[-1] - cutoff_frame["cutoff"] >= dt.timedelta(days=30)).all()
 
 
 @pytest.mark.parametrize(
@@ -96,53 +102,3 @@ def test_fill_stock_data_to_time_horizon(
     mocker.patch("pfa.analytics.prophet.metric_id_cache")
     filled_stock_data = fill_stock_data_to_time_horizon(stock_data, date_config)
     assert filled_stock_data["value"].sum() == value_sum
-
-
-@pytest.mark.parametrize(
-    "stock_config, date_config",
-    [pytest.param(pd.DataFrame([(1), (2), (3)], columns=["stock_id"]), pd.DataFrame())],
-)
-@pytest.mark.parametrize(
-    "full_stock_data, expected_result",
-    [
-        pytest.param(
-            pd.DataFrame([(1)], columns=["stock_id"]),
-            pd.DataFrame([(1)]),
-            id="One stock id in the full frame",
-        ),
-        pytest.param(
-            pd.DataFrame([(1), (2)], columns=["stock_id"]),
-            pd.DataFrame([(1), (1)]),
-            id="One stock id in the full frame",
-        ),
-    ],
-)
-def test_loop_through_stocks(
-    mocker: MockerFixture,
-    stock_config: pd.DataFrame,
-    date_config: pd.DataFrame,
-    full_stock_data: pd.DataFrame,
-    expected_result: pd.DataFrame,
-):
-    def example_func(param1, param2, param3):
-        return pd.DataFrame([(1)])
-
-    def mock_read_sql(query: Query):
-        return {
-            "stock_config": stock_config,
-            "date_config": date_config,
-        }[query._raw_columns[0].name]
-
-    def mock_get_stock_data(stock_id):
-        return full_stock_data.loc[full_stock_data["stock_id"] == stock_id, :]
-
-    mocker.patch("pfa.analytics.data_manipulation.read_sql", mock_read_sql)
-    mocker.patch("pfa.analytics.data_manipulation.get_stock_data", mock_get_stock_data)
-    mocker.patch(
-        "pfa.analytics.data_manipulation.fill_stock_data_to_time_horizon",
-        lambda x, y: x,
-    )
-
-    result = loop_through_stocks(example_func)
-
-    assert_frame_equal(result.reset_index(drop=True), expected_result)
