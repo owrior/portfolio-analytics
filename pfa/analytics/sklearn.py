@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from pfa.analytics.data_manipulation import clear_previous_analytics
-from pfa.analytics.data_manipulation import create_time_windows
+from pfa.analytics.data_manipulation import get_cutoffs
 from pfa.analytics.data_manipulation import get_training_parameters
 from pfa.analytics.data_manipulation import unscale_natural_log
 from pfa.analytics.calculated_metrics import rmse, rmsle, smape
@@ -60,7 +60,7 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
 def validate_performance(
     Model, stock_data, date_config, stock_id, analytics_id, kwargs
 ):
-    clear_previous_analytics(stock_id, analytics_id_cache.xgboost, validation=True)
+    clear_previous_analytics(stock_id, analytics_id, validation=True)
 
     stock_data["adj_close"] = stock_data["y"]
     stock_data = transform_prediction_and_create_x(stock_data)
@@ -70,40 +70,39 @@ def validate_performance(
         stock_data["ds"].dt.date >= dt.date.today() - dt.timedelta(days=360)
     ].reset_index(drop=True)
 
-    window_size = int(min(len(stock_data) / 3, 90))
-    stock_data_shards = create_time_windows(stock_data, 30, window_size)
-
-    scores = []
-    for shard in stock_data_shards:
-        x, y = get_xy(shard, window_size)
+    initial = 180
+    step_size = 30
+    horizon = 30
+    cutoffs = get_cutoffs(stock_data["ds"], initial, step_size)
+    validation_scores = []
+    for cutoff in cutoffs:
+        initial_period = stock_data.loc[stock_data["ds"] < cutoff, :]
+        x, y = get_xy(initial_period, len(initial_period))
         m = Model(**kwargs).fit(x, y)
-        comparisons = []
-        for row_start in np.arange(28, len(shard) - 28, step=7):
-            predict_from = shard.iloc[:row_start]
-            predicted_data = predict_forward(
-                m,
-                predict_from,
-                date_config,
-                row_start,
-                np.min([30, len(shard) - row_start]),
-                kwargs,
-                trained=True,
+        training_period = stock_data[stock_data["ds"] == cutoff].index[0]
+        predicted_data = predict_forward(
+            m,
+            initial_period,
+            date_config,
+            training_period,
+            horizon,
+            kwargs,
+            trained=True,
+        )
+        comparisons = (
+            predicted_data.loc[
+                predicted_data["y"].isna(), ["date", "y_hat", "adj_close"]
+            ]
+            .rename(columns={"adj_close": "adj_close_hat"})
+            .merge(
+                stock_data.rename(columns={"ds": "date"}).loc[
+                    :, ["date", "y", "adj_close"]
+                ],
+                on="date",
+                how="inner",
             )
-            comparisons.append(
-                predicted_data.loc[
-                    predicted_data["y"].isna(), ["date", "y_hat", "adj_close"]
-                ]
-                .rename(columns={"adj_close": "adj_close_hat"})
-                .merge(
-                    shard.rename(columns={"ds": "date"}).loc[
-                        :, ["date", "y", "adj_close"]
-                    ],
-                    on="date",
-                    how="inner",
-                )
-            )
-        comparisons = pd.concat(comparisons)
-        scores.append(
+        )
+        validation_scores.append(
             pd.DataFrame(
                 {
                     "metric_id": [
@@ -120,12 +119,12 @@ def validate_performance(
             ).assign(
                 analytics_id=analytics_id,
                 stock_id=stock_id,
-                date=shard["ds"].max(),
+                date=cutoff + dt.timedelta(days=horizon),
             )
         )
 
     return (
-        pd.concat(scores)
+        pd.concat(validation_scores)
         .merge(date_config, on="date", how="inner")
         .assign(forecast_date_id=date_id_cache.todays_id)
         .loc[:, extract_columns(AnalyticsValues)]

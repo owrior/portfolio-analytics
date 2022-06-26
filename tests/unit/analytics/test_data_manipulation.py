@@ -8,6 +8,7 @@ from sqlalchemy.orm import Query
 from pfa.analytics.data_manipulation import create_time_windows
 from pfa.analytics.data_manipulation import fill_stock_data_to_time_horizon
 from pfa.analytics.data_manipulation import loop_through_stocks
+from pfa.analytics.data_manipulation import get_cutoffs
 
 
 @pytest.mark.parametrize(
@@ -55,6 +56,15 @@ def test_create_time_windows(
     assert (
         time_series_list[-1].iloc[-1, 0].date() == time_series_data.date.dt.date.max()
     )
+
+
+@pytest.mark.parametrize(
+    "dates", [pytest.param(pd.date_range("2020-01-01", periods=360))]
+)
+@pytest.mark.parametrize("initial, horizon", [pytest.param(180, 30)])
+def test_get_cutoffs(dates, initial, horizon):
+    cutoffs = get_cutoffs(dates, initial, horizon)
+    assert len(dates) - initial == len(dates.where(dates < cutoffs[0]).dropna())
 
 
 @pytest.mark.parametrize(

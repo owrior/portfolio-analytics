@@ -5,12 +5,11 @@ import numpy as np
 import pandas as pd
 from prophet import Prophet
 from prophet.diagnostics import cross_validation
-from prophet.diagnostics import performance_metrics
 
 from pfa.analytics.data_manipulation import clear_previous_analytics
-from pfa.analytics.data_manipulation import create_time_windows
 from pfa.analytics.data_manipulation import get_training_parameters
-from pfa.analytics.calculated_metrics import rmse, rmsle, smape
+from pfa.analytics.calculated_metrics import get_metric_function_mapping
+from pfa.analytics.data_manipulation import get_cutoffs
 from pfa.db_admin import extract_columns
 from pfa.id_cache import MetricIDCache, analytics_id_cache
 from pfa.id_cache import date_id_cache
@@ -61,32 +60,23 @@ def validate_prophet_performance(stock_data, date_config, stock_id) -> pd.DataFr
     stock_data = stock_data.loc[
         stock_data["ds"].dt.date >= dt.date.today() - dt.timedelta(days=360)
     ].reset_index(drop=True)
-    cutoffs = pd.to_datetime(
-        [
-            shard["ds"].min()
-            for shard in create_time_windows(
-                stock_data, 30, int(min(len(stock_data) / 3, 90))
-            )
-        ]
-    )
+    cutoffs = [
+        x - dt.timedelta(days=30) for x in get_cutoffs(stock_data["ds"], 180, 30)
+    ]
     with suppress_stdout_stderr():
         m = get_prophet_model().fit(stock_data)
         cv = cross_validation(m, cutoffs=cutoffs, horizon="30 days")
-        validation_metrics = []
-        for function, metric_id in zip(
-            [rmse, rmsle, smape],
-            [metric_id_cache.rmse, metric_id_cache.rmsle, metric_id_cache.smape],
-        ):
-            validation_metrics.append(
-                cv.groupby("cutoff")["y", "yhat"]
-                .apply(lambda x: function(x["y"], x["yhat"]))
-                .reset_index()
-                .rename(columns={"cutoff": "date", 0: "value"})
-                .assign(
-                    metric_id=metric_id,
-                    date=lambda x: x["date"] + dt.timedelta(days=30),
-                )
+        validation_metrics = [
+            cv.groupby("cutoff")["y", "yhat"]
+            .apply(lambda x: function(x["y"], x["yhat"]))
+            .reset_index()
+            .rename(columns={"cutoff": "date", 0: "value"})
+            .assign(
+                metric_id=metric_id,
+                date=lambda x: x["date"] + dt.timedelta(days=30),
             )
+            for metric_id, function in get_metric_function_mapping()
+        ]
     return (
         pd.concat(validation_metrics)
         .merge(date_config, on="date", how="inner")
@@ -127,7 +117,7 @@ class suppress_stdout_stderr(object):
 
     def __init__(self):
         # Open a pair of null files
-        self.null_fds = [os.open(os.devnull, os.O_RDWR) for x in range(2)]
+        self.null_fds = [os.open(os.devnull, os.O_RDWR) for _ in range(2)]
         # Save the actual stdout (1) and stderr (2) file descriptors.
         self.save_fds = (os.dup(1), os.dup(2))
 

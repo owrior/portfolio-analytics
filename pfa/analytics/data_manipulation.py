@@ -45,6 +45,17 @@ def create_time_windows(
     return [time_series_data.iloc[index - index_values[0], :] for index in index_list]
 
 
+def get_cutoffs(dates: pd.Series, initial: int = None, step_size: int = None):
+    """ """
+    total_period = len(dates)
+    if initial is None:
+        initial = total_period // 2
+    if step_size is None:
+        step_size = total_period // 12
+    total_horizons = int(np.ceil((total_period - initial) / step_size))
+    return [dates[initial + (n * step_size)] for n in range(total_horizons)]
+
+
 def loop_through_stocks(func) -> Any:
     stock_config = read_sql(Query(StockConfig))
     date_config = read_sql(Query(DateConfig))
