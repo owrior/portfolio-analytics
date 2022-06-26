@@ -2,11 +2,16 @@
 
 Module for tracking portfolio performance.
 
-## Installing requirements
+## Installing
 
+### Python
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install poetry
+poetry install
+
+### Docker
+Basic postgresql DB.
 
 ## Runnning CI tools
 
