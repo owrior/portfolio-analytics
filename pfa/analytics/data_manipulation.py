@@ -103,6 +103,7 @@ def fill_stock_data_to_time_horizon(
         .rename(columns={"date": "ds"})
         .merge(stock_data, on="ds", how="left")
         .ffill()
+        .dropna()
     )
 
 

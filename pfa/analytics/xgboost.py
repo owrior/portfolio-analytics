@@ -23,6 +23,7 @@ def xgboost_forecast(stock_data, date_config, stock_id):
     return None
 
 
+@prefect.task
 def validate_xgboost_performance(stock_data, date_config, stock_id):
     return validate_performance(
         XGBRegressor,

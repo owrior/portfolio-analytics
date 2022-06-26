@@ -32,6 +32,7 @@ def get_prophet_model():
 @prefect.task
 def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
     clear_previous_analytics(stock_id, analytics_id_cache.prophet)
+    stock_data = stock_data.copy()
     training_period, forecast_length = 270, 90
     stock_data, training_end = get_training_parameters(stock_data, training_period)
     with suppress_stdout_stderr():
@@ -64,8 +65,10 @@ def prophet_forecast(stock_data, date_config, stock_id) -> pd.DataFrame:
     return None
 
 
+@prefect.task
 def validate_prophet_performance(stock_data, date_config, stock_id) -> pd.DataFrame:
     clear_previous_analytics(stock_id, analytics_id_cache.prophet, validation=True)
+    stock_data = stock_data.copy()
     stock_data = stock_data.loc[
         stock_data["ds"].dt.date >= dt.date.today() - dt.timedelta(days=360)
     ].reset_index(drop=True)

@@ -23,6 +23,7 @@ def baysian_ridge_forecast(stock_data, date_config, stock_id):
     return None
 
 
+@prefect.task
 def validate_baysian_ridge_performance(stock_data, date_config, stock_id):
     return validate_performance(
         BayesianRidge,

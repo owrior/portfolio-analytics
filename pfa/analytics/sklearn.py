@@ -20,6 +20,7 @@ from pfa.models.values import AnalyticsValues
 
 def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
     clear_previous_analytics(stock_id, analytics_id_cache.xgboost)
+    stock_data = stock_data.copy()
     training_period, forecast_length = 270, 90
     stock_data, training_end = get_training_parameters(stock_data, training_period)
 
@@ -62,6 +63,7 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
 def validate_performance(
     Model, stock_data, date_config, stock_id, analytics_id, kwargs
 ):
+    stock_data = stock_data.copy()
     clear_previous_analytics(stock_id, analytics_id_cache.xgboost, validation=True)
 
     stock_data["adj_close"] = stock_data["y"]
