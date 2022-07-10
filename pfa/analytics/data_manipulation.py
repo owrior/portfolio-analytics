@@ -1,18 +1,16 @@
 import datetime as dt
-from typing import Any
 from typing import List
 from typing import Tuple
 
 import numpy as np
 import pandas as pd
+import prefect
 import sqlalchemy as sa
 from sqlalchemy.orm import Query
-from tqdm import tqdm
 
 from pfa.db import execute_query
 from pfa.id_cache import metric_id_cache
 from pfa.models.config import DateConfig
-from pfa.models.config import StockConfig
 from pfa.models.values import AnalyticsValues
 from pfa.models.values import StockValues
 from pfa.readwrite import read_sql
@@ -45,18 +43,51 @@ def create_time_windows(
     return [time_series_data.iloc[index - index_values[0], :] for index in index_list]
 
 
-def loop_through_stocks(func) -> Any:
-    stock_config = read_sql(Query(StockConfig))
-    date_config = read_sql(Query(DateConfig))
+def get_cutoffs(dates: pd.Series, initial: int = None, step_size: int = None):
+    """ """
+    total_period = len(dates)
+    if initial is None:
+        initial = total_period // 2
+    if step_size is None:
+        step_size = total_period // 12
+    total_horizons = int(np.ceil((total_period - initial) / step_size))
+    cutoffs = [dates[initial + (n * step_size) - 1] for n in range(total_horizons)]
+    return [
+        cutoff
+        for cutoff in cutoffs
+        if (dates.iloc[-1] - cutoff) >= dt.timedelta(days=30)
+    ]
 
-    function_results = []
 
-    for _, row in tqdm(stock_config.iterrows(), total=len(stock_config)):
-        stock_data = get_stock_data(row.stock_id)
-        if not stock_data.empty:
-            stock_data = fill_stock_data_to_time_horizon(stock_data, date_config)
-            function_results.append(func(stock_data, date_config, row.stock_id))
-    return pd.concat(function_results)
+@prefect.task
+def get_stock_ids() -> List[int]:
+    """
+    Fetches stock ids.
+    """
+    return read_sql(Query(StockValues).with_entities(StockValues.stock_id).distinct())[
+        "stock_id"
+    ].to_list()
+
+
+@prefect.task
+def get_stock_data_to_forecast(
+    stock_ids: List[int], date_config: pd.DataFrame
+) -> List[Tuple]:
+    """
+    Return tuples with stock ids and filled stock data.
+    """
+    return [
+        fill_stock_data_to_time_horizon(get_stock_data(stock_id), date_config)
+        for stock_id in stock_ids
+    ]
+
+
+@prefect.task
+def get_date_config() -> pd.DataFrame:
+    """
+    Return date_config tables.
+    """
+    return read_sql(Query(DateConfig))
 
 
 def fill_stock_data_to_time_horizon(
@@ -71,6 +102,7 @@ def fill_stock_data_to_time_horizon(
         .rename(columns={"date": "ds"})
         .merge(stock_data, on="ds", how="left")
         .ffill()
+        .dropna()
     )
 
 

@@ -3,24 +3,23 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import make_scorer
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import cross_validate
 
+from pfa.analytics.calculated_metrics import rmse
+from pfa.analytics.calculated_metrics import rmsle
+from pfa.analytics.calculated_metrics import smape
 from pfa.analytics.data_manipulation import clear_previous_analytics
-from pfa.analytics.data_manipulation import create_time_windows
+from pfa.analytics.data_manipulation import get_cutoffs
 from pfa.analytics.data_manipulation import get_training_parameters
 from pfa.analytics.data_manipulation import unscale_natural_log
 from pfa.db_admin import extract_columns
-from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
 from pfa.id_cache import metric_id_cache
 from pfa.models.values import AnalyticsValues
 
 
 def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
-    clear_previous_analytics(stock_id, analytics_id_cache.xgboost)
+    clear_previous_analytics(stock_id, analytics_id)
+    stock_data = stock_data.copy()
     training_period, forecast_length = 270, 90
     stock_data, training_end = get_training_parameters(stock_data, training_period)
 
@@ -30,64 +29,15 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
     if len(stock_data) < training_period:
         training_period = len(stock_data)
 
-    stock_data = create_features(stock_data)
-    x, y = get_xy(stock_data, training_period)
-    m = Model(**kwargs).fit(x, y)
-    stock_data = (
-        pd.DataFrame(
-            {
-                "ds": pd.date_range(
-                    stock_data["ds"].min(),
-                    stock_data["ds"].max() + dt.timedelta(days=forecast_length),
-                )
-            }
-        )
-        .merge(stock_data, on="ds", how="left")
-        .rename(columns={"ds": "date"})
-        .merge(date_config, on="date", how="inner")
-    )
-    date_id_zero = int(stock_data["date_id"].min())
+    stock_data = stock_data.loc[
+        stock_data["ds"].dt.date >= dt.date.today() - dt.timedelta(days=360)
+    ].reset_index(drop=True)
 
-    for days_forward in np.arange(0, forecast_length):
-        x_pred, y_pred = get_xy(
-            stock_data.iloc[: (training_period + days_forward), :],
-            training_period + days_forward,
-        )
-        y_hat = m.predict(x_pred)
-        stock_data["y_hat"] = np.concatenate(
-            (
-                y_hat,
-                np.where(
-                    np.zeros(shape=(forecast_length - days_forward,)) == 0,
-                    np.nan,
-                    0,
-                ),
-            ),
-        )
-        t_plus_one = date_id_zero + (training_period + days_forward)
-        if days_forward == 0:
-            stock_data["x"] = np.where(
-                stock_data["date_id"] == t_plus_one,
-                stock_data["y"].shift(),
-                stock_data["x"],
-            )
-            stock_data["adj_close"] = np.where(
-                stock_data["date_id"] == t_plus_one,
-                unscale_natural_log(stock_data["x"]) * stock_data["adj_close"].shift(),
-                stock_data["adj_close"],
-            )
-        else:
-            stock_data["x"] = np.where(
-                stock_data["date_id"] == t_plus_one,
-                stock_data["y_hat"].shift(),
-                stock_data["x"],
-            )
-            stock_data["adj_close"] = np.where(
-                stock_data["date_id"] == t_plus_one,
-                unscale_natural_log(stock_data["x"]) * stock_data["adj_close"].shift(),
-                stock_data["adj_close"],
-            )
-        stock_data = create_features(stock_data)
+    stock_data = create_features(stock_data)
+
+    stock_data = predict_forward(
+        Model, stock_data, date_config, training_period, forecast_length, kwargs
+    )
 
     stock_data = stock_data.assign(
         forecast_date_id=date_id_cache.todays_id,
@@ -112,60 +62,146 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
 def validate_performance(
     Model, stock_data, date_config, stock_id, analytics_id, kwargs
 ):
-    scoring = {
-        key: make_scorer(func)
-        for key, func in {
-            "mean_absolute_error": mean_absolute_error,
-            "mean_squared_error": mean_squared_error,
-            "mean_squared_log_error": lambda y_true, y_pred: np.sqrt(
-                np.mean(np.square(np.log(y_true + 1) - np.log(y_pred + 1)))
-            ),
-        }.items()
-    }
-    score_mapping = {
-        "mean_absolute_error": metric_id_cache.mean_abs_error,
-        "mean_squared_error": metric_id_cache.rmse,
-        "mean_squared_log_error": metric_id_cache.rmsle,
-    }
-    clear_previous_analytics(stock_id, analytics_id_cache.xgboost, validation=True)
+    stock_data = stock_data.copy()
+    clear_previous_analytics(stock_id, analytics_id, validation=True)
 
+    stock_data["adj_close"] = stock_data["y"]
     stock_data = transform_prediction_and_create_x(stock_data)
     stock_data = create_features(stock_data)
+
     stock_data = stock_data.loc[
         stock_data["ds"].dt.date >= dt.date.today() - dt.timedelta(days=360)
     ].reset_index(drop=True)
 
-    window_size = int(min(len(stock_data) / 3, 90))
-    stock_data_shards = create_time_windows(stock_data, 30, window_size)
-
-    scores = []
-    for shard in stock_data_shards:
-        x, y = get_xy(shard, window_size)
-        model = Model(**kwargs).fit(x, y)
-        scores.append(
-            pd.DataFrame(cross_validate(model, x, y, scoring=scoring, cv=5))
-            .mean()
-            .reset_index()
-            .rename(columns={0: "value"})
-            .assign(
+    initial = 180
+    step_size = 30
+    horizon = 30
+    cutoffs = get_cutoffs(stock_data["ds"], initial, step_size)
+    validation_scores = []
+    for cutoff in cutoffs:
+        initial_period = stock_data.loc[stock_data["ds"] < cutoff, :]
+        x, y = get_xy(initial_period, len(initial_period))
+        m = Model(**kwargs).fit(x, y)
+        training_period = stock_data[stock_data["ds"] == cutoff].index[0]
+        predicted_data = predict_forward(
+            m,
+            initial_period,
+            date_config,
+            training_period,
+            horizon,
+            kwargs,
+            trained=True,
+        )
+        comparisons = (
+            predicted_data.loc[
+                predicted_data["y"].isna(), ["date", "y_hat", "adj_close"]
+            ]
+            .rename(columns={"adj_close": "adj_close_hat"})
+            .merge(
+                stock_data.rename(columns={"ds": "date"}).loc[
+                    :, ["date", "y", "adj_close"]
+                ],
+                on="date",
+                how="inner",
+            )
+        )
+        validation_scores.append(
+            pd.DataFrame(
+                {
+                    "metric_id": [
+                        metric_id_cache.rmse,
+                        metric_id_cache.rmsle,
+                        metric_id_cache.smape,
+                    ],
+                    "value": [
+                        rmse(comparisons["adj_close"], comparisons["adj_close_hat"]),
+                        rmsle(comparisons["adj_close"], comparisons["adj_close_hat"]),
+                        smape(comparisons["adj_close"], comparisons["adj_close_hat"]),
+                    ],
+                }
+            ).assign(
                 analytics_id=analytics_id,
                 stock_id=stock_id,
-                date=shard["ds"].max(),
-                metric_id=lambda x: x["index"].map(
-                    {"test_" + key: val for key, val in score_mapping.items()}
-                ),
-                value=lambda x: x["value"],
+                date=cutoff + dt.timedelta(days=horizon),
             )
-            .drop(columns="index")
-            .dropna()
         )
 
     return (
-        pd.concat(scores)
+        pd.concat(validation_scores)
         .merge(date_config, on="date", how="inner")
         .assign(forecast_date_id=date_id_cache.todays_id)
         .loc[:, extract_columns(AnalyticsValues)]
     )
+
+
+def predict_forward(
+    Model,
+    stock_data,
+    date_config,
+    training_period,
+    forecast_length,
+    kwargs,
+    trained=False,
+):
+    if trained:
+        m = Model
+    else:
+        x, y = get_xy(stock_data, training_period)
+        m = Model(**kwargs).fit(x, y)
+    stock_data = (
+        pd.DataFrame(
+            {
+                "ds": pd.date_range(
+                    stock_data["ds"].min(),
+                    stock_data["ds"].max() + dt.timedelta(days=int(forecast_length)),
+                )
+            }
+        )
+        .merge(stock_data, on="ds", how="left")
+        .rename(columns={"ds": "date"})
+        .merge(date_config, on="date", how="inner")
+        .ffill()
+        .assign(y_hat=lambda x: x.y)
+    )
+    stock_data.loc[training_period:, "x"] = stock_data["y_hat"].iloc[-1]
+
+    tolerance = 1e-9
+    for _ in range(10000):
+        # Get features
+        x_pred, y_pred = get_xy(stock_data.tail(forecast_length), forecast_length)
+
+        # Generate forecast
+        y_hat = m.predict(x_pred)
+        if _ == 0:
+            y_hat_minus_1 = -y_hat
+
+        # Assign forecast values
+        stock_data.loc[training_period:, "y_hat"] = y_hat
+
+        # Assign unknown initial value
+        stock_data.loc[(training_period + 1) :, "x"] = y_hat[:-1]
+
+        # Recreate features
+        stock_data = stock_data.pipe(create_features)
+
+        # Check condition
+        if np.max(np.abs(y_hat - y_hat_minus_1)) < tolerance:
+            break
+        y_hat_minus_1 = y_hat
+
+    # Calculate adjusted close for forecast horizon
+    initial_adj_close = stock_data["adj_close"].iloc[-1]
+    adj_close = np.zeros(forecast_length)
+    for _, increase in enumerate(unscale_natural_log(y_hat)):
+        if _ == 0:
+            # Need to start with initial value when the previous will be before
+            # the forecast range.
+            adj_close[_] = initial_adj_close * increase
+        else:
+            # Else calculate based on the previously calculated value.
+            adj_close[_] = adj_close[_ - 1] * increase
+    stock_data.loc[training_period:, "adj_close"] = adj_close
+    return stock_data
 
 
 def transform_prediction_and_create_x(stock_data: pd.DataFrame) -> pd.DataFrame:

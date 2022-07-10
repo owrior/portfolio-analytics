@@ -1,0 +1,30 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+
+# Isort
+-   repo: https://github.com/pycqa/isort
+    rev: 5.6.4
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--filter-files"]
+
+# Flake 8
+-   repo: https://github.com/pycqa/flake8
+    rev: 4.0.1
+    hooks:
+      - id: flake8
+        args: ["--ignore=E501,F821,E203,W503", "--max-line-length=88"]
+
+# Black
+
+-   repo: https://github.com/psf/black
+    rev: 21.12b0
+    hooks:
+      - id: black
+        additional_dependencies: ["click==8.0.4"]
+        language_version: python3

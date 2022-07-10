@@ -1,3 +1,0 @@
-analysis_id;analysis;description
-1;Prophet;Prophet regression from facebook.
-2;XGBoost Regression;Gradient boosted regression from xgboost package.
