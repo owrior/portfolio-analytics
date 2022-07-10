@@ -161,49 +161,47 @@ def predict_forward(
         .merge(stock_data, on="ds", how="left")
         .rename(columns={"ds": "date"})
         .merge(date_config, on="date", how="inner")
+        .ffill()
+        .assign(y_hat=lambda x: x.y)
     )
-    date_id_zero = int(stock_data["date_id"].min())
+    stock_data.loc[training_period:, "x"] = stock_data["y_hat"].iloc[-1]
 
-    for days_forward in np.arange(0, forecast_length + 1):
-        x_pred, y_pred = get_xy(
-            stock_data.iloc[: (training_period + days_forward), :],
-            training_period + days_forward,
-        )
+    tolerance = 1e-9
+    for _ in range(10000):
+        # Get features
+        x_pred, y_pred = get_xy(stock_data.tail(forecast_length), forecast_length)
+
+        # Generate forecast
         y_hat = m.predict(x_pred)
-        stock_data["y_hat"] = np.concatenate(
-            (
-                y_hat,
-                np.where(
-                    np.zeros(shape=(forecast_length - days_forward,)) == 0,
-                    np.nan,
-                    0,
-                ),
-            ),
-        )
-        t_plus_one = date_id_zero + (training_period + days_forward)
-        if days_forward == 0:
-            stock_data = assign_forward_iteration(stock_data, t_plus_one)
+        if _ == 0:
+            y_hat_minus_1 = -y_hat
+
+        # Assign forecast values
+        stock_data.loc[training_period:, "y_hat"] = y_hat
+
+        # Assign unknown initial value
+        stock_data.loc[(training_period + 1) :, "x"] = y_hat[:-1]
+
+        # Recreate features
+        stock_data = stock_data.pipe(create_features)
+
+        # Check condition
+        if np.max(np.abs(y_hat - y_hat_minus_1)) < tolerance:
+            break
+        y_hat_minus_1 = y_hat
+
+    # Calculate adjusted close for forecast horizon
+    initial_adj_close = stock_data["adj_close"].iloc[-1]
+    adj_close = np.zeros(forecast_length)
+    for _, increase in enumerate(unscale_natural_log(y_hat)):
+        if _ == 0:
+            # Need to start with initial value when the previous will be before
+            # the forecast range.
+            adj_close[_] = initial_adj_close * increase
         else:
-            stock_data = assign_forward_iteration(stock_data, t_plus_one, y="y_hat")
-        stock_data = stock_data.pipe(calculate_adj_close).pipe(create_features)
-    return stock_data
-
-
-def assign_forward_iteration(stock_data, t_id, x="x", y="y"):
-    stock_data[x] = np.where(
-        stock_data["date_id"] == t_id,
-        stock_data[y].shift(),
-        stock_data[x],
-    )
-    return stock_data
-
-
-def calculate_adj_close(stock_data):
-    stock_data["adj_close"] = np.where(
-        stock_data["adj_close"].isna(),
-        unscale_natural_log(stock_data["y_hat"]) * stock_data["adj_close"].shift(),
-        stock_data["adj_close"],
-    )
+            # Else calculate based on the previously calculated value.
+            adj_close[_] = adj_close[_ - 1] * increase
+    stock_data.loc[training_period:, "adj_close"] = adj_close
     return stock_data
 
 
