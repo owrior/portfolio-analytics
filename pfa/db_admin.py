@@ -24,7 +24,7 @@ def initialise_database():
 
 
 def insert_ref_data():
-    frame_to_sql(_get_dates(), "date_config")
+    frame_to_sql(get_dates(), "date_config")
 
     with open("pfa/ref_data.yaml") as raw_ref_data:
         ref_data = yaml.safe_load(raw_ref_data)
@@ -33,7 +33,7 @@ def insert_ref_data():
         frame_to_sql(pd.DataFrame(contents), table_name)
 
 
-def _get_dates(start: str = "1970-01-01", end: str = "2050-01-01") -> pd.DataFrame:
+def get_dates(start: str = "1970-01-01", end: str = "2050-01-01") -> pd.DataFrame:
     return (
         pd.DataFrame({"date": pd.date_range(start, end)})
         .assign(date_id=lambda x: x.index)

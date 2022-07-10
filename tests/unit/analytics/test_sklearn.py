@@ -11,7 +11,7 @@ from pfa.analytics.sklearn import create_features
 from pfa.analytics.sklearn import get_xy
 from pfa.analytics.sklearn import predict_forward
 from pfa.analytics.sklearn import transform_prediction_and_create_x
-from pfa.db_admin import _get_dates
+from pfa.db_admin import get_dates
 
 logger = logging.getLogger()
 
@@ -67,7 +67,7 @@ def test_get_xy(
                     "adj_close": np.arange(31) + 100,
                 }
             ),
-            _get_dates(start="2020-01-01", end="2050-01-01"),
+            get_dates(start="2020-01-01", end="2050-01-01"),
             30,
             5,
             np.array([133.63, 136.71, 139.25, 141.30, 142.92]),
