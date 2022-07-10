@@ -12,14 +12,13 @@ from pfa.analytics.data_manipulation import get_cutoffs
 from pfa.analytics.data_manipulation import get_training_parameters
 from pfa.analytics.data_manipulation import unscale_natural_log
 from pfa.db_admin import extract_columns
-from pfa.id_cache import analytics_id_cache
 from pfa.id_cache import date_id_cache
 from pfa.id_cache import metric_id_cache
 from pfa.models.values import AnalyticsValues
 
 
 def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
-    clear_previous_analytics(stock_id, analytics_id_cache.xgboost)
+    clear_previous_analytics(stock_id, analytics_id)
     stock_data = stock_data.copy()
     training_period, forecast_length = 270, 90
     stock_data, training_end = get_training_parameters(stock_data, training_period)

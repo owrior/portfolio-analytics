@@ -9,7 +9,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "=3.8"
+python = "^3.8"
 sqlalchemy = "^1.4.3"
 sqlalchemy-utils = "^0.38.2"
 sqlalchemy-views = "^0.3.1"

@@ -1,3 +1,5 @@
+import datetime as dt
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -56,12 +58,18 @@ def test_create_time_windows(
 
 
 @pytest.mark.parametrize(
-    "dates", [pytest.param(pd.date_range("2020-01-01", periods=360))]
+    "dates",
+    [
+        pytest.param(pd.Series(pd.date_range("2020-01-01", periods=365))),
+    ],
 )
 @pytest.mark.parametrize("initial, horizon", [pytest.param(180, 30)])
 def test_get_cutoffs(dates, initial, horizon):
     cutoffs = get_cutoffs(dates, initial, horizon)
-    assert len(dates) - initial == len(dates.where(dates < cutoffs[0]).dropna())
+    cutoff_frame = pd.DataFrame({"cutoff": cutoffs})
+
+    assert (cutoff_frame["cutoff"].diff().dropna() == dt.timedelta(days=30)).all()
+    assert (dates.iloc[-1] - cutoff_frame["cutoff"] >= dt.timedelta(days=30)).all()
 
 
 @pytest.mark.parametrize(
