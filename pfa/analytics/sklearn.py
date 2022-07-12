@@ -18,6 +18,9 @@ from pfa.models.values import AnalyticsValues
 
 
 def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
+    """
+    Train an sklearn structured model and forecast stock data.
+    """
     clear_previous_analytics(stock_id, analytics_id)
     stock_data = stock_data.copy()
     training_period, forecast_length = 270, 90
@@ -62,6 +65,9 @@ def forecast(Model, stock_data, date_config, stock_id, analytics_id, kwargs):
 def validate_performance(
     Model, stock_data, date_config, stock_id, analytics_id, kwargs
 ):
+    """
+    Perform cross validation for model for anm sklearn style model.
+    """
     stock_data = stock_data.copy()
     clear_previous_analytics(stock_id, analytics_id, validation=True)
 
@@ -143,6 +149,15 @@ def predict_forward(
     kwargs,
     trained=False,
 ):
+    """
+    Performs forecasting up to a certain time into the future.
+
+    Sets the previous known values as the initial conditions (forward filling)
+    then iterates until the maximum change between iterations is below the tol-
+    erance.
+
+    Then calculates the adjusted close based on the predicted log change.
+    """
     if trained:
         m = Model
     else:
@@ -172,8 +187,6 @@ def predict_forward(
 
         # Generate forecast
         y_hat = m.predict(x_pred)
-        if _ == 0:
-            y_hat_minus_1 = -y_hat
 
         # Assign forecast values
         stock_data.loc[training_period:, "y_hat"] = y_hat
@@ -183,6 +196,11 @@ def predict_forward(
 
         # Recreate features
         stock_data = stock_data.pipe(create_features)
+
+        # Initialise the check variable forcing it to have a non-zero absolute
+        # difference for the first iteration.
+        if _ == 0:
+            y_hat_minus_1 = -y_hat
 
         # Check condition
         if np.max(np.abs(y_hat - y_hat_minus_1)) < tolerance:
@@ -205,6 +223,9 @@ def predict_forward(
 
 
 def transform_prediction_and_create_x(stock_data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Transform adjusted close to log difference and create x as y t-1.
+    """
     stock_data["y"] = np.log(stock_data["y"] / stock_data["y"].shift())
     stock_data = stock_data.dropna().copy()
     stock_data["x"] = stock_data["y"].shift().bfill()
@@ -212,6 +233,9 @@ def transform_prediction_and_create_x(stock_data: pd.DataFrame) -> pd.DataFrame:
 
 
 def create_features(stock_data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create features to be used in modelling.
+    """
     stock_data["x_std"] = stock_data["x"].std()
     stock_data["x_bar_7d"] = stock_data["x"].rolling(7, min_periods=4).mean().bfill()
     stock_data["x_bar_28d"] = stock_data["x"].rolling(28, min_periods=14).mean().bfill()
@@ -219,6 +243,9 @@ def create_features(stock_data: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_xy(df: pd.DataFrame, window_size: int) -> Tuple[np.array]:
+    """
+    Split dataframe into x and y numpy arrays.
+    """
     return (
         df.filter(like="x").values.reshape(
             (window_size, len(df.filter(like="x").columns))

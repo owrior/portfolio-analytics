@@ -11,6 +11,9 @@ KWARGS = {}
 
 @prefect.task
 def baysian_ridge_forecast(stock_data, date_config, stock_id):
+    """
+    Executes sklearn forcast with baysian ridge model.
+    """
     forecast_ = forecast(
         BayesianRidge,
         stock_data,
@@ -25,6 +28,9 @@ def baysian_ridge_forecast(stock_data, date_config, stock_id):
 
 @prefect.task
 def validate_baysian_ridge_performance(stock_data, date_config, stock_id):
+    """
+    Executes sklearn validation for baysian ridge model.
+    """
     return validate_performance(
         BayesianRidge,
         stock_data,

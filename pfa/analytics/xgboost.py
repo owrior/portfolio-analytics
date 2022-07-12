@@ -11,6 +11,9 @@ KWARGS = {"eta": 0.1}
 
 @prefect.task
 def xgboost_forecast(stock_data, date_config, stock_id):
+    """
+    Executes sklearn forcast with xgboost model.
+    """
     forecast_ = forecast(
         XGBRegressor,
         stock_data,
@@ -25,6 +28,9 @@ def xgboost_forecast(stock_data, date_config, stock_id):
 
 @prefect.task
 def validate_xgboost_performance(stock_data, date_config, stock_id):
+    """
+    Executes sklearn validation for xgboost model.
+    """
     return validate_performance(
         XGBRegressor,
         stock_data,
