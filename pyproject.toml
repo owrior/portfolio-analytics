@@ -23,6 +23,7 @@ dash = "^2.5.1"
 prophet = "1.0.1"
 dash_bootstrap_components = "^1.1.0"
 psycopg2 = "^2.9.3"
+pywin32 = "^301"
 
 [tool.poetry.dev-dependencies]
 black = "22.3.0"
