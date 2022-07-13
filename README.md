@@ -4,7 +4,7 @@ Module for tracking portfolio performance.
 
 ## Installing
 
-### Python
+### Python setup
 
 ```
 python -m venv .venv
@@ -13,11 +13,11 @@ pip install poetry
 poetry install
 ```
 
-### Docker
+### Docker setup
 
 Basic postgresql DB.
 
-### Pre-commit hooks
+### Pre-commit hooks (for Dev)
 
 ```
 pip install pre-commit
@@ -25,16 +25,8 @@ pre-commit install
 pre-commit run --all-files
 ```
 
-## Runnning CI tools
-
-```
-isort --profile black pfa tests; black pfa tests; flake8 pfa tests --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
-```
-
 ## Running workflows
 
 ```
-python3 -m pfa -wf initialise;
-python3 -m pfa -wf validation;
-python3 -m pfa -wf forecast;
+prefect run -p pfa/workflows/initialise.py
 ```
