@@ -7,6 +7,9 @@ logger = logging.get_logger(__file__)
 
 
 def frame_to_sql(df: pd.DataFrame, table_name: str) -> None:
+    """
+    Insert dataframe to sql.
+    """
     if df.empty:
         logger.debug("Did not insert empty dataframe")
     else:
@@ -22,10 +25,16 @@ def frame_to_sql(df: pd.DataFrame, table_name: str) -> None:
 
 
 def read_sql(query, text=False) -> pd.DataFrame:
+    """
+    Read a sql query to a pandas dataframe.
+    """
     return pd.read_sql(query if text else query.statement, get_engine())
 
 
 def read_view(name: str, where: str = None) -> pd.DataFrame:
+    """
+    Read and sort data from a view with an optional filter condition.
+    """
     query = f"SELECT * FROM {name}"
     if where:
         query += f" WHERE {where}"
