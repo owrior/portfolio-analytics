@@ -1,13 +1,8 @@
-import datetime as dt
-
 import numpy as np
 import pandas as pd
 import pytest
-from pytest_mock import MockerFixture
 
 from pfa.analytics.data_manipulation import create_time_windows
-from pfa.analytics.data_manipulation import fill_stock_data_to_time_horizon
-from pfa.analytics.data_manipulation import get_cutoffs
 
 
 @pytest.mark.parametrize(
@@ -55,49 +50,3 @@ def test_create_time_windows(
     assert (
         time_series_list[-1].iloc[-1, 0].date() == time_series_data.date.dt.date.max()
     )
-
-
-@pytest.mark.parametrize(
-    "dates",
-    [
-        pytest.param(pd.Series(pd.date_range("2020-01-01", periods=365))),
-    ],
-)
-@pytest.mark.parametrize("initial, horizon", [pytest.param(180, 30)])
-def test_get_cutoffs(dates, initial, horizon):
-    cutoffs = get_cutoffs(dates, initial, horizon)
-    cutoff_frame = pd.DataFrame({"cutoff": cutoffs})
-
-    assert (cutoff_frame["cutoff"].diff().dropna() == dt.timedelta(days=30)).all()
-    assert (dates.iloc[-1] - cutoff_frame["cutoff"] >= dt.timedelta(days=30)).all()
-
-
-@pytest.mark.parametrize(
-    "date_config", [pytest.param(pd.DataFrame({"date": np.arange(0, 100)}))]
-)
-@pytest.mark.parametrize(
-    "stock_data, value_sum",
-    [
-        pytest.param(
-            pd.DataFrame([(10, 4), (20, 19)], columns=["ds", "value"]),
-            (20 - 10) * 4 + 19,
-            id="Check filling and bounding works",
-        ),
-        pytest.param(
-            pd.DataFrame([(10, 4), (20, 19), (99, 0)], columns=["ds", "value"]),
-            (20 - 10) * 4 + (99 - 20) * 19,
-            id="Check filled to full horizon when value inplace",
-        ),
-        pytest.param(
-            pd.DataFrame([(20, 19), (10, 4)], columns=["ds", "value"]),
-            (20 - 10) * 4 + 19,
-            id="Check order is unimportant",
-        ),
-    ],
-)
-def test_fill_stock_data_to_time_horizon(
-    mocker: MockerFixture, stock_data, date_config, value_sum
-):
-    mocker.patch("pfa.analytics.prophet.metric_id_cache")
-    filled_stock_data = fill_stock_data_to_time_horizon(stock_data, date_config)
-    assert filled_stock_data["value"].sum() == value_sum

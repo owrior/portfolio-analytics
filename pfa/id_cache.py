@@ -12,6 +12,10 @@ logger = logging.get_logger(__file__)
 
 
 class IDCache:
+    """
+    Class cache ids from the database which can be referenced as a property.
+    """
+
     id_column = None
     label_column = None
     table = None

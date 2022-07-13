@@ -20,6 +20,9 @@ from pfa.readwrite import frame_to_sql
 
 
 def get_prophet_model():
+    """
+    Get the prophet model to run.
+    """
     return Prophet(daily_seasonality=False, yearly_seasonality=False).add_seasonality(
         name="quarterly", period=365.25 / 4, fourier_order=5, prior_scale=15
     )

@@ -44,7 +44,9 @@ def create_time_windows(
 
 
 def get_cutoffs(dates: pd.Series, initial: int = None, step_size: int = None):
-    """ """
+    """
+    Get date cutoffs for cross validation.
+    """
     total_period = len(dates)
     if initial is None:
         initial = total_period // 2
@@ -70,19 +72,6 @@ def get_stock_ids() -> List[int]:
 
 
 @prefect.task
-def get_stock_data_to_forecast(
-    stock_ids: List[int], date_config: pd.DataFrame
-) -> List[Tuple]:
-    """
-    Return tuples with stock ids and filled stock data.
-    """
-    return [
-        fill_stock_data_to_time_horizon(get_stock_data(stock_id), date_config)
-        for stock_id in stock_ids
-    ]
-
-
-@prefect.task
 def get_date_config() -> pd.DataFrame:
     """
     Return date_config tables.
@@ -90,23 +79,10 @@ def get_date_config() -> pd.DataFrame:
     return read_sql(Query(DateConfig))
 
 
-def fill_stock_data_to_time_horizon(
-    stock_data: pd.DataFrame, date_config: pd.DataFrame
-):
-    return (
-        date_config.loc[
-            (date_config["date"] >= stock_data["ds"].min())
-            & (date_config["date"] <= stock_data["ds"].max()),
-            ["date"],
-        ]
-        .rename(columns={"date": "ds"})
-        .merge(stock_data, on="ds", how="left")
-        .ffill()
-        .dropna()
-    )
-
-
 def get_stock_data(stock_id: int) -> pd.DataFrame:
+    """
+    Retrieves data for a particular stock.
+    """
     return read_sql(
         Query(StockValues)
         .with_entities(
@@ -121,6 +97,9 @@ def get_stock_data(stock_id: int) -> pd.DataFrame:
 
 
 def clear_previous_analytics(stock_id, analytics_id, validation: bool = False):
+    """
+    Clears database of a specific analytic.
+    """
     query = (
         sa.delete(AnalyticsValues)
         .where(AnalyticsValues.stock_id == stock_id)
