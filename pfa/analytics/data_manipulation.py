@@ -96,6 +96,35 @@ def get_stock_data(stock_id: int) -> pd.DataFrame:
     )
 
 
+@prefect.task
+def get_stock_data_to_forecast(
+    stock_ids: List[int], date_config: pd.DataFrame
+) -> List[Tuple]:
+    """
+    Return tuples with stock ids and filled stock data.
+    """
+    return [
+        fill_stock_data_to_time_horizon(get_stock_data(stock_id), date_config)
+        for stock_id in stock_ids
+    ]
+
+
+def fill_stock_data_to_time_horizon(
+    stock_data: pd.DataFrame, date_config: pd.DataFrame
+):
+    return (
+        date_config.loc[
+            (date_config["date"] >= stock_data["ds"].min())
+            & (date_config["date"] <= stock_data["ds"].max()),
+            ["date"],
+        ]
+        .rename(columns={"date": "ds"})
+        .merge(stock_data, on="ds", how="left")
+        .ffill()
+        .dropna()
+    )
+
+
 def clear_previous_analytics(stock_id, analytics_id, validation: bool = False):
     """
     Clears database of a specific analytic.

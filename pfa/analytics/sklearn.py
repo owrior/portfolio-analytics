@@ -100,7 +100,7 @@ def validate_performance(
         )
         comparisons = (
             predicted_data.loc[
-                predicted_data["y"].isna(), ["date", "y_hat", "adj_close"]
+                predicted_data["date"] >= cutoff, ["date", "y_hat", "adj_close"]
             ]
             .rename(columns={"adj_close": "adj_close_hat"})
             .merge(

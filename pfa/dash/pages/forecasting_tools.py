@@ -69,7 +69,7 @@ def update_validation_figure(stock):
         px.line(
             read_view(
                 "validation_metrics",
-                where=f'stock="{stock}"',
+                where=f"stock='{stock}'",
             ).rename(columns={"date": "Date", "value": "RMSE", "analysis": "Analysis"}),
             title=f"Model validation - {stock}",
             x="Date",
@@ -94,8 +94,8 @@ def update_forecast_figure(stock, metric, start_date, end_date):
         px.line(
             read_view(
                 "forecasts",
-                where=f'stock="{stock}" AND metric="{metric}" '
-                f'AND date BETWEEN DATE("{start_date}") AND DATE("{end_date}")',
+                where=f"stock='{stock}' AND metric='{metric}' "
+                f"AND date BETWEEN DATE('{start_date}') AND DATE('{end_date}')",
             ).rename(
                 columns={"date": "Date", "value": f"{metric}", "analysis": "Analysis"}
             ),

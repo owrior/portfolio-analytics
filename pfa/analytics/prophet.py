@@ -87,7 +87,7 @@ def validate_prophet_performance(stock_data, date_config, stock_id) -> pd.DataFr
             )
             for metric_id, function in get_metric_function_mapping()
         ]
-    return (
+    validation_metrics = (
         pd.concat(validation_metrics)
         .merge(date_config, on="date", how="inner")
         .assign(
@@ -97,6 +97,8 @@ def validate_prophet_performance(stock_data, date_config, stock_id) -> pd.DataFr
         )
         .loc[:, extract_columns(AnalyticsValues)]
     )
+    frame_to_sql(validation_metrics, "analytics_values")
+    return None
 
 
 def generate_validation_metrics(true_data, predicted_data):
