@@ -14,7 +14,7 @@ def baysian_ridge_forecast(stock_data, date_config, stock_id):
     """
     Executes sklearn forcast with baysian ridge model.
     """
-    forecast_ = forecast(
+    forecast_values = forecast(
         BayesianRidge,
         stock_data,
         date_config,
@@ -22,7 +22,7 @@ def baysian_ridge_forecast(stock_data, date_config, stock_id):
         analytics_id_cache.bayesian_ridge,
         KWARGS,
     )
-    frame_to_sql(forecast_, "analytics_values")
+    frame_to_sql(forecast_values, "analytics_values")
     return None
 
 
@@ -31,7 +31,7 @@ def validate_baysian_ridge_performance(stock_data, date_config, stock_id):
     """
     Executes sklearn validation for baysian ridge model.
     """
-    return validate_performance(
+    validation_performance_ = validate_performance(
         BayesianRidge,
         stock_data,
         date_config,
@@ -39,3 +39,5 @@ def validate_baysian_ridge_performance(stock_data, date_config, stock_id):
         analytics_id_cache.bayesian_ridge,
         KWARGS,
     )
+    frame_to_sql(validation_performance_, "analytics_value")
+    return None

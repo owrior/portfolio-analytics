@@ -14,7 +14,7 @@ def xgboost_forecast(stock_data, date_config, stock_id):
     """
     Executes sklearn forcast with xgboost model.
     """
-    forecast_ = forecast(
+    forecast_values = forecast(
         XGBRegressor,
         stock_data,
         date_config,
@@ -22,7 +22,7 @@ def xgboost_forecast(stock_data, date_config, stock_id):
         analytics_id_cache.xgboost,
         KWARGS,
     )
-    frame_to_sql(forecast_, "analytics_values")
+    frame_to_sql(forecast_values, "analytics_values")
     return None
 
 
@@ -31,7 +31,7 @@ def validate_xgboost_performance(stock_data, date_config, stock_id):
     """
     Executes sklearn validation for xgboost model.
     """
-    return validate_performance(
+    validation_performance = validate_performance(
         XGBRegressor,
         stock_data,
         date_config,
@@ -39,3 +39,5 @@ def validate_xgboost_performance(stock_data, date_config, stock_id):
         analytics_id_cache.xgboost,
         KWARGS,
     )
+    frame_to_sql(validation_performance, "analytics_values")
+    return None
