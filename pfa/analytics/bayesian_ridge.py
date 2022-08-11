@@ -39,5 +39,5 @@ def validate_baysian_ridge_performance(stock_data, date_config, stock_id):
         analytics_id_cache.bayesian_ridge,
         KWARGS,
     )
-    frame_to_sql(validation_performance_, "analytics_value")
+    frame_to_sql(validation_performance_, "analytics_values")
     return None

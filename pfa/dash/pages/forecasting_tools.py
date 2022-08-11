@@ -19,25 +19,10 @@ layout = html.Div(
     children=[
         dbc.Row(
             children=[
-                dbc.Col(width=9),
-                dbc.Col(
-                    children=[
-                        dcc.Dropdown(
-                            id="stock-dropdown",
-                            options=stock_dropdown,
-                            value=stock_dropdown[0],
-                        ),
-                        dcc.Dropdown(
-                            id="metric-dropdown",
-                            options=metric_dropdown,
-                            value=metric_dropdown[0],
-                        ),
-                        dcc.DatePickerRange(
-                            id="date-slider",
-                            **get_date_kwargs("forecasts"),
-                        ),
-                    ],
-                    width=3,
+                dcc.Dropdown(
+                    id="stock-dropdown",
+                    options=stock_dropdown,
+                    value=stock_dropdown[0],
                 ),
             ],
             style={"padding-top": "1%"},
@@ -54,7 +39,22 @@ layout = html.Div(
                 dbc.Col(
                     dcc.Graph(
                         id="forecast-figure",
-                    )
+                    ),
+                    width=10,
+                ),
+                dbc.Col(
+                    children=[
+                        dcc.Dropdown(
+                            id="metric-dropdown",
+                            options=metric_dropdown,
+                            value=metric_dropdown[0],
+                        ),
+                        dcc.DatePickerRange(
+                            id="date-slider",
+                            **get_date_kwargs("forecasts"),
+                        ),
+                    ],
+                    width=2,
                 ),
             ]
         ),
@@ -67,16 +67,21 @@ layout = html.Div(
 def update_validation_figure(stock):
     return except_missing_db(
         px.line(
-            read_view(
-                "validation_metrics",
-                where=f"stock='{stock}'",
-            ).rename(columns={"date": "Date", "value": "RMSE", "analysis": "Analysis"}),
+            read_view("validation_metrics", where=f"stock='{stock}'",).rename(
+                columns={
+                    "date": "Date",
+                    "value": "Metric",
+                    "analysis": "Analysis",
+                }
+            ),
             title=f"Model validation - {stock}",
             x="Date",
-            y="RMSE",
+            y="Metric",
             color="Analysis",
             facet_row="metric",
-        ).update_yaxes(matches=None)
+        )
+        # Removes equivalent axes.
+        .update_yaxes(matches=None)
     )
 
 
