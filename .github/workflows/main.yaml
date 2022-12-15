@@ -31,11 +31,10 @@ jobs:
           pip install poetry
       - name: Lock poetry
         run: poetry lock
-      - name: Export dependecies
+      - name: Install dependecies
         run: |
-          poetry export --without-hashes -f requirements.txt > requirements.txt
-      - name: Install dependencies
-        run: pip install --no deps -r requirements.txt
+          poetry export --without-hashes -f requirements.txt > requirements.txt && \
+          pip install --no-deps -r requirements.txt
       - name: Check inline with black
         run: |
           poetry run black . --check
