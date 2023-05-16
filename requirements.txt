@@ -1,0 +1,13 @@
+sqlalchemy
+sqlalchemy-utils
+sqlalchemy-views
+pandas == 1.3.5
+prefect == 1
+datapackage
+yfinance
+xgboost
+scikit-learn
+dash
+prophet
+dash_bootstrap_components
+psycopg2-binary
