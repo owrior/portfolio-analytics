@@ -1,8 +1,7 @@
 import prefect
 from xgboost import XGBRegressor
 
-from pfa.analytics.sklearn import forecast
-from pfa.analytics.sklearn import validate_performance
+from pfa.analytics.sklearn import forecast, validate_performance
 from pfa.id_cache import analytics_id_cache
 from pfa.readwrite import frame_to_sql
 

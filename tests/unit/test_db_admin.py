@@ -2,8 +2,7 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from pytest_mock import MockerFixture
 
-from pfa.db_admin import get_dates
-from pfa.db_admin import insert_ref_data
+from pfa.db_admin import get_dates, insert_ref_data
 
 
 def test_get_dates(date_config: pd.DataFrame):

@@ -10,8 +10,7 @@ from datapackage import Package
 from sqlalchemy.orm import Query
 
 from pfa.models.config import DateConfig
-from pfa.readwrite import frame_to_sql
-from pfa.readwrite import read_sql
+from pfa.readwrite import frame_to_sql, read_sql
 
 
 @prefect.task

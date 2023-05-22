@@ -8,13 +8,13 @@ from prophet import Prophet
 from prophet.diagnostics import cross_validation
 
 from pfa.analytics.calculated_metrics import get_metric_function_mapping
-from pfa.analytics.data_manipulation import clear_previous_analytics
-from pfa.analytics.data_manipulation import get_cutoffs
-from pfa.analytics.data_manipulation import get_training_parameters
+from pfa.analytics.data_manipulation import (
+    clear_previous_analytics,
+    get_cutoffs,
+    get_training_parameters,
+)
 from pfa.db_admin import extract_columns
-from pfa.id_cache import analytics_id_cache
-from pfa.id_cache import date_id_cache
-from pfa.id_cache import metric_id_cache
+from pfa.id_cache import analytics_id_cache, date_id_cache, metric_id_cache
 from pfa.models.values import AnalyticsValues
 from pfa.readwrite import frame_to_sql
 

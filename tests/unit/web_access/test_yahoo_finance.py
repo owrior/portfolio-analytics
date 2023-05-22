@@ -4,8 +4,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from pfa.web_access.yahoo_finance import _process_stock_values
-from pfa.web_access.yahoo_finance import get_last_business_day
+from pfa.web_access.yahoo_finance import _process_stock_values, get_last_business_day
 
 
 @pytest.mark.parametrize(

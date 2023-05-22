@@ -4,16 +4,15 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 
-from pfa.analytics.calculated_metrics import rmse
-from pfa.analytics.calculated_metrics import rmsle
-from pfa.analytics.calculated_metrics import smape
-from pfa.analytics.data_manipulation import clear_previous_analytics
-from pfa.analytics.data_manipulation import get_cutoffs
-from pfa.analytics.data_manipulation import get_training_parameters
-from pfa.analytics.data_manipulation import unscale_natural_log
+from pfa.analytics.calculated_metrics import rmse, rmsle, smape
+from pfa.analytics.data_manipulation import (
+    clear_previous_analytics,
+    get_cutoffs,
+    get_training_parameters,
+    unscale_natural_log,
+)
 from pfa.db_admin import extract_columns
-from pfa.id_cache import date_id_cache
-from pfa.id_cache import metric_id_cache
+from pfa.id_cache import date_id_cache, metric_id_cache
 from pfa.models.values import AnalyticsValues
 
 
