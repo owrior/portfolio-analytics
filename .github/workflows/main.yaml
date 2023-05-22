@@ -34,10 +34,10 @@ jobs:
           pip install -r requirements-lint.txt
       - name: Check with isort
         run: |
-          isort --profile black --filter-files --check
-      - name: Check code quality with flake8
+          isort . --profile black --filter-files --check
+      - name: Check code quality with ruff
         run: |
-          flake8 --ignore=E501,F821,E203,W503 --max-line-length=88
+          ruff check .
       - name: Check inline with black
         run: |
           black . --check

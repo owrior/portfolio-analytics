@@ -13,12 +13,12 @@ repos:
       - id: isort
         args: ["--profile", "black", "--filter-files"]
 
-# Flake 8
--   repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
-    hooks:
-      - id: flake8
-        args: ["--ignore=E501,F821,E203,W503", "--max-line-length=88"]
+# Ruff
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: v0.0.269
+  hooks:
+    - id: ruff
+      args: [ --fix, --exit-non-zero-on-fix ]
 
 # Black
 

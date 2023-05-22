@@ -1,5 +1,5 @@
 black==23.3.0
-flake8==4.0.1
+ruff==0.0.269
 isort==5.12.0
 pytest
 pytest_mock
