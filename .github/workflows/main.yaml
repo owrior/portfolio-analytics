@@ -32,15 +32,15 @@ jobs:
       - name: Install linting dependencies
         run: |
           pip install -r requirements-lint.txt
-      - name: Check inline with black
-        run: |
-          black . --check
       - name: Check with isort
         run: |
           isort --profile black --filter-files --check
       - name: Check code quality with flake8
         run: |
           flake8 --ignore=E501,F821,E203,W503 --max-line-length=88
+      - name: Check inline with black
+        run: |
+          black . --check
       - name: Test with pytest
         run: |
           poetry run pytest tests/unit
