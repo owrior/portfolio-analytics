@@ -1,8 +1,7 @@
 import sqlalchemy as sqa
 from prefect.utilities import logging
 from sqlalchemy.orm import Query
-from sqlalchemy_views import CreateView
-from sqlalchemy_views import DropView
+from sqlalchemy_views import CreateView, DropView
 
 logger = logging.get_logger(__file__)
 

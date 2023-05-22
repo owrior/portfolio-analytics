@@ -1,8 +1,7 @@
 import prefect
 from sklearn.linear_model import BayesianRidge
 
-from pfa.analytics.sklearn import forecast
-from pfa.analytics.sklearn import validate_performance
+from pfa.analytics.sklearn import forecast, validate_performance
 from pfa.id_cache import analytics_id_cache
 from pfa.readwrite import frame_to_sql
 
@@ -39,5 +38,5 @@ def validate_baysian_ridge_performance(stock_data, date_config, stock_id):
         analytics_id_cache.bayesian_ridge,
         KWARGS,
     )
-    frame_to_sql(validation_performance_, "analytics_value")
+    frame_to_sql(validation_performance_, "analytics_values")
     return None

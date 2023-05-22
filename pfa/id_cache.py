@@ -3,9 +3,7 @@ import datetime as dt
 from prefect.utilities import logging
 from sqlalchemy.orm import Query
 
-from pfa.models.config import AnalyticsConfig
-from pfa.models.config import DateConfig
-from pfa.models.config import MetricConfig
+from pfa.models.config import AnalyticsConfig, DateConfig, MetricConfig
 from pfa.readwrite import read_sql
 
 logger = logging.get_logger(__file__)

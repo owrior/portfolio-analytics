@@ -1,10 +1,11 @@
-from prefect import Flow
-from prefect import unmapped
+from prefect import Flow, unmapped
 
 from pfa.analytics.bayesian_ridge import validate_baysian_ridge_performance
-from pfa.analytics.data_manipulation import get_date_config
-from pfa.analytics.data_manipulation import get_stock_data_to_forecast
-from pfa.analytics.data_manipulation import get_stock_ids
+from pfa.analytics.data_manipulation import (
+    get_date_config,
+    get_stock_data_to_forecast,
+    get_stock_ids,
+)
 from pfa.analytics.prophet import validate_prophet_performance
 from pfa.analytics.xgboost import validate_xgboost_performance
 

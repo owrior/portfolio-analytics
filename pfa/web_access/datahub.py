@@ -10,13 +10,11 @@ from datapackage import Package
 from sqlalchemy.orm import Query
 
 from pfa.models.config import DateConfig
-from pfa.readwrite import frame_to_sql
-from pfa.readwrite import read_sql
+from pfa.readwrite import frame_to_sql, read_sql
 
 
 @prefect.task
 def populate_datahub_parameter_values(parameter_dates):
-
     date_config = read_sql(Query(DateConfig))
 
     parameter_values = _download_and_process_parameter_values(
