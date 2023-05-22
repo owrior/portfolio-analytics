@@ -8,6 +8,7 @@ yfinance
 xgboost
 scikit-learn
 dash
+holidays==0.24
 prophet
 dash_bootstrap_components
 psycopg2-binary
