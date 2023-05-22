@@ -15,7 +15,6 @@ from pfa.readwrite import frame_to_sql, read_sql
 
 @prefect.task
 def populate_datahub_parameter_values(parameter_dates):
-
     date_config = read_sql(Query(DateConfig))
 
     parameter_values = _download_and_process_parameter_values(

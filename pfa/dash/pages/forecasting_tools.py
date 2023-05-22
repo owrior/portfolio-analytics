@@ -61,7 +61,10 @@ layout = html.Div(
 def update_validation_figure(stock):
     return except_missing_db(
         px.line(
-            read_view("validation_metrics", where=f"stock='{stock}'",).rename(
+            read_view(
+                "validation_metrics",
+                where=f"stock='{stock}'",
+            ).rename(
                 columns={
                     "date": "Date",
                     "value": "Metric",
