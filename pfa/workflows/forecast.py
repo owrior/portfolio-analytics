@@ -1,11 +1,10 @@
-from prefect import Flow, unmapped
+from prefect import Flow
+from prefect import unmapped
 
 from pfa.analytics.bayesian_ridge import baysian_ridge_forecast
-from pfa.analytics.data_manipulation import (
-    get_date_config,
-    get_stock_data_to_forecast,
-    get_stock_ids,
-)
+from pfa.analytics.data_manipulation import get_date_config
+from pfa.analytics.data_manipulation import get_stock_data_to_forecast
+from pfa.analytics.data_manipulation import get_stock_ids
 from pfa.analytics.prophet import prophet_forecast
 from pfa.analytics.xgboost import xgboost_forecast
 

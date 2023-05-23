@@ -3,12 +3,16 @@ from sqlalchemy.orm import Query
 
 from pfa.db import create_view_from_orm_query
 from pfa.id_cache import metric_id_cache
-from pfa.models.config import AnalyticsConfig, DateConfig, MetricConfig, StockConfig
-from pfa.models.values import AnalyticsValues, StockValues
+from pfa.models.config import AnalyticsConfig
+from pfa.models.config import DateConfig
+from pfa.models.config import MetricConfig
+from pfa.models.config import StockConfig
+from pfa.models.values import AnalyticsValues
+from pfa.models.values import StockValues
 
 
 def get_view_creation():
-    return [*validation_metrics(), *historical_adj_close(), *forecasts()]
+    return [*validation_metrics(), *historical(), *forecasts()]
 
 
 def validation_metrics():
@@ -19,11 +23,13 @@ def validation_metrics():
     return create_view_from_orm_query("validation_metrics", query)
 
 
-def historical_adj_close():
+def historical():
     query = get_values_table_with_labels(
-        StockValues, [metric_id_cache.adj_close], include_analytics=False
+        StockValues,
+        [metric_id_cache.adj_close, metric_id_cache.volume, metric_id_cache.log_return],
+        include_analytics=False,
     )
-    return create_view_from_orm_query("historical_adj_close", query)
+    return create_view_from_orm_query("historical", query)
 
 
 def forecasts():

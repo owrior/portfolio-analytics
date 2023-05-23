@@ -3,15 +3,14 @@ import logging
 import numpy as np
 import pandas as pd
 import pytest
-from numpy.testing import assert_almost_equal, assert_array_equal
+from numpy.testing import assert_almost_equal
+from numpy.testing import assert_array_equal
 from sklearn.linear_model import LinearRegression
 
-from pfa.analytics.sklearn import (
-    create_features,
-    get_xy,
-    predict_forward,
-    transform_prediction_and_create_x,
-)
+from pfa.analytics.sklearn import create_features
+from pfa.analytics.sklearn import get_xy
+from pfa.analytics.sklearn import predict_forward
+from pfa.analytics.sklearn import transform_prediction_and_create_x
 from pfa.db_admin import get_dates
 
 logger = logging.getLogger()

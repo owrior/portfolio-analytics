@@ -3,7 +3,9 @@ import datetime as dt
 from prefect.utilities import logging
 from sqlalchemy.orm import Query
 
-from pfa.models.config import AnalyticsConfig, DateConfig, MetricConfig
+from pfa.models.config import AnalyticsConfig
+from pfa.models.config import DateConfig
+from pfa.models.config import MetricConfig
 from pfa.readwrite import read_sql
 
 logger = logging.get_logger(__file__)
@@ -50,6 +52,10 @@ class MetricIDCache(IDCache):
     @property
     def adj_close(self):
         return self.get_id("Adj Close")
+
+    @property
+    def volume(self):
+        return self.get_id("Volume")
 
     @property
     def log_return(self):

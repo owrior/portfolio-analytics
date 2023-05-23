@@ -1,14 +1,14 @@
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.types import Float, Integer
+from sqlalchemy.types import Float
+from sqlalchemy.types import Integer
 
-from pfa.models.config import (
-    AnalyticsConfig,
-    DateConfig,
-    MetricConfig,
-    ParameterConfig,
-    StockConfig,
-)
+from pfa.models.config import AnalyticsConfig
+from pfa.models.config import DateConfig
+from pfa.models.config import MetricConfig
+from pfa.models.config import ParameterConfig
+from pfa.models.config import StockConfig
 
 Base = declarative_base()
 

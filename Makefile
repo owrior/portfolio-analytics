@@ -22,3 +22,6 @@ run_workflows:
 	prefect run -p pfa/workflows/views.py
 	prefect run -p pfa/workflows/forecast.py
 	prefect run -p pfa/workflows/validation.py
+
+streamlit:
+	streamlit run sl-dash/Home.py

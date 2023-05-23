@@ -1,8 +1,14 @@
 import dash_bootstrap_components as dbc
 import plotly.express as px
-from dash import Input, Output, callback, dcc, html
+from dash import Input
+from dash import Output
+from dash import callback
+from dash import dcc
+from dash import html
 
-from pfa.dash.figure import except_missing_db, get_date_kwargs, get_dropdown_options
+from pfa.dash.figure import except_missing_db
+from pfa.dash.figure import get_date_kwargs
+from pfa.dash.figure import get_dropdown_options
 from pfa.readwrite import read_view
 
 stock_dropdown = get_dropdown_options("stock_config", "stock", "forecasts")

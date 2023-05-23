@@ -1,5 +1,6 @@
 import datetime as dt
-from typing import List, Tuple
+from typing import List
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -10,7 +11,8 @@ from sqlalchemy.orm import Query
 from pfa.db import execute_query
 from pfa.id_cache import metric_id_cache
 from pfa.models.config import DateConfig
-from pfa.models.values import AnalyticsValues, StockValues
+from pfa.models.values import AnalyticsValues
+from pfa.models.values import StockValues
 from pfa.readwrite import read_sql
 
 
