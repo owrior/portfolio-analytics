@@ -10,7 +10,8 @@ from datapackage import Package
 from sqlalchemy.orm import Query
 
 from pfa.models.config import DateConfig
-from pfa.readwrite import frame_to_sql, read_sql
+from pfa.readwrite import frame_to_sql
+from pfa.readwrite import read_sql
 
 
 @prefect.task
@@ -37,7 +38,7 @@ def _download_and_process_parameter_values(
     res = pd.DataFrame(
         package.get_resource(parameter_dates.resource_name).read(),
         columns=["date", "value"],
-    ).astype({"date": "datetime64", "value": "float"})
+    ).astype({"date": "datetime64[ns]", "value": "float"})
 
     parameter_values = (
         res.loc[res["date"] > start_date]

@@ -2,28 +2,22 @@
 
 Module for tracking portfolio performance.
 
-## Installing
-
-### Python setup
+## Initial Setup
 
 ```
-python -m venv .venv
-source .venv/bin/activate
-pip install poetry
-poetry install
+make setup
 ```
+
+This will:
+* Create a venv
+* Install requirements
+* Setup pre-commit
+
 
 ### Docker setup
 
 Basic postgresql DB.
 
-### Pre-commit hooks (for Dev)
-
-```
-pip install pre-commit
-pre-commit install
-pre-commit run --all-files
-```
 
 ## Running workflows
 

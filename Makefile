@@ -15,3 +15,10 @@ setup:
 	$(VENV_BIN)/pip install pre-commit
 	$(VENV_BIN)/pre-commit install
 	$(VENV_BIN)/pre-commit run --all-files
+	$(VENV_BIN)/pip install .
+
+run_workflows:
+	prefect run -p pfa/workflows/initialise.py
+	prefect run -p pfa/workflows/views.py
+	prefect run -p pfa/workflows/forecast.py
+	prefect run -p pfa/workflows/validation.py
