@@ -17,11 +17,16 @@ setup:
 	$(VENV_BIN)/pre-commit run --all-files
 	$(VENV_BIN)/pip install .
 
-run_workflows:
+run_all_wf:
 	prefect run -p pfa/workflows/initialise.py
 	prefect run -p pfa/workflows/views.py
 	prefect run -p pfa/workflows/forecast.py
 	prefect run -p pfa/workflows/validation.py
 
 streamlit:
-	streamlit run sl-dash/Home.py
+	streamlit run sl_dash/Home.py
+
+start_db:
+	docker start postgres-HmC0
+	docker start pgadmin4
+	echo "Access at http://localhost:5050/"

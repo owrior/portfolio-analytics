@@ -52,12 +52,12 @@ def get_values_table_with_labels(
     entities = [
         DateConfig.date.label("date"),
         StockConfig.stock.label("stock"),
-        AnalyticsConfig.analysis.label("analysis")
-        if include_analytics
-        else sqa.sql.expression.literal("Actual Data").label("analysis"),
         MetricConfig.metric.label("metric"),
         Values.value.label("value"),
     ]
+
+    if include_analytics:
+        entities.insert(2, AnalyticsConfig.analysis.label("analysis"))
 
     query = (
         Query(Values)
