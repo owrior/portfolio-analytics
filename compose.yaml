@@ -1,0 +1,7 @@
+services:
+  postgres:
+    image: postgres
+  pgadmin:
+    image: pgadmin4
+    depends_on:
+      - postgres
