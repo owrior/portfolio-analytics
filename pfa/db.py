@@ -6,6 +6,11 @@ from sqlalchemy_views import DropView
 
 logger = logging.get_logger(__file__)
 
+
+USERNAME = "postgres"
+PASSWORD = "postgrespw"
+HOST = "127.0.0.1"
+PORT = 5432
 PDB = "PFA"
 
 
@@ -13,9 +18,10 @@ def get_engine(db_name: str = None) -> sqa.engine:
     """
     Get the engine string.
     """
+
     if not db_name:
         db_name = PDB
-    url = f"postgresql://postgres:postgrespw@localhost:49153/{PDB}"
+    url = f"postgresql://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{PDB}?sslmode=disable"
     return sqa.create_engine(url)
 
 

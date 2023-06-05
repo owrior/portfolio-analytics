@@ -29,14 +29,3 @@ def read_sql(query, text=False) -> pd.DataFrame:
     Read a sql query to a pandas dataframe.
     """
     return pd.read_sql(query if text else query.statement, get_engine())
-
-
-def read_view(name: str, where: str = None) -> pd.DataFrame:
-    """
-    Read and sort data from a view with an optional filter condition.
-    """
-    query = f"SELECT * FROM {name}"
-    if where:
-        query += f" WHERE {where}"
-    view_result = pd.read_sql(query, get_engine())
-    return view_result.sort_values([*view_result.columns])

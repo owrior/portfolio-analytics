@@ -1,6 +1,5 @@
 sqlalchemy
 sqlalchemy-utils
-sqlalchemy-views
 pandas
 prefect == 1
 datapackage
